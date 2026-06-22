@@ -1,0 +1,43 @@
+from typing import Literal
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.client import get_session
+from app.entidad.mesa.aplicacion.actualizar_estado_mesa import actualizar_estado_mesa
+from app.entidad.mesa.aplicacion.checkin_mesa import checkin_mesa
+from app.entidad.mesa.aplicacion.listar_mesas import listar_mesas
+from app.entidad.mesa.infraestructura.schemas import MesaEstadoPatchRequest, MesaPublica
+from app.utilidad.rbac.infraestructura.deps import requires
+
+
+router = APIRouter(prefix="/v1/mesas", tags=["Mesas"])
+
+
+@router.get("", response_model=list[MesaPublica])
+async def get_mesas(
+    mesero_id: Literal["me"] | None = Query(default=None),
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("mesero", "admin")),
+) -> list[MesaPublica]:
+    id_mesero = int(actor["sub"]) if actor["rol"] == "mesero" or mesero_id == "me" else None
+    return await listar_mesas(session, id_mesero=id_mesero)
+
+
+@router.patch("/{id}/estado", response_model=MesaPublica)
+async def patch_estado_mesa(
+    id: int,
+    data: MesaEstadoPatchRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("mesero", "admin")),
+) -> MesaPublica:
+    return await actualizar_estado_mesa(session, id, data)
+
+
+@router.post("/{id}/checkin", response_model=MesaPublica)
+async def post_checkin_mesa(
+    id: int,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("cliente")),
+) -> MesaPublica:
+    return await checkin_mesa(session, id)
