@@ -53,7 +53,7 @@ function MesaGridSkeleton(): JSX.Element {
   return (
     <div className="grid grid-cols-2 gap-3" aria-label="Cargando mesas">
       {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="h-[150px] animate-shimmer rounded-lg bg-[linear-gradient(90deg,#F4ECE0_0%,#FAF6F0_48%,#F4ECE0_100%)] bg-[length:200%_100%]" />
+        <div key={index} className="h-[136px] animate-shimmer rounded-lg bg-[linear-gradient(90deg,#F4ECE0_0%,#FAF6F0_48%,#F4ECE0_100%)] bg-[length:200%_100%]" />
       ))}
     </div>
   );

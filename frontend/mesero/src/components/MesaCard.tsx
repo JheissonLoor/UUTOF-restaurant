@@ -11,7 +11,7 @@ interface MesaCardProps {
 const statusLabels: Record<MesaEstado, string> = {
   libre: 'Libre',
   ocupada: 'Activa',
-  reservada: 'Reservada',
+  reservada: 'Reserva',
   lista: 'Plato listo',
   limpieza: 'Limpieza',
 };
@@ -56,7 +56,7 @@ export function MesaCard({ mesa, onOpen }: MesaCardProps): JSX.Element {
       type="button"
       disabled={!canOpen}
       className={clsx(
-        'relative flex min-h-[150px] w-full flex-col gap-2 rounded-lg border-[1.5px] p-3.5 text-left transition active:scale-[0.97] disabled:cursor-default disabled:opacity-100',
+        'relative flex min-h-[136px] w-full flex-col gap-2 rounded-lg border-[1.5px] p-3.5 text-left transition active:scale-[0.97] disabled:cursor-default disabled:opacity-100',
         stateClasses(mesa.estado),
         mesa.estado === 'lista' && 'animate-[count-in_500ms_ease-out]',
       )}
@@ -70,12 +70,16 @@ export function MesaCard({ mesa, onOpen }: MesaCardProps): JSX.Element {
 
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-serif text-[22px] font-semibold leading-none text-ink-900">Mesa {mesa.numero}</div>
+          <div className="whitespace-nowrap font-serif text-[21px] font-semibold leading-none text-ink-900">Mesa {mesa.numero}</div>
           <div className="mt-1 truncate text-[10px] font-semibold uppercase tracking-[0.06em] text-ink-400">
-            {mesa.zona ? zoneLabels[mesa.zona] : 'Zona pendiente'}
+            {mesa.zona ? zoneLabels[mesa.zona] : 'Sin zona'}
           </div>
         </div>
-        <span className={clsx('inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[10.5px] font-semibold', statusClasses(mesa.estado))}>
+        <span className={clsx(
+          'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-1 text-[10.5px] font-semibold',
+          (mesa.estado === 'reservada' || mesa.estado === 'limpieza') && 'px-1.5 text-[9.5px]',
+          statusClasses(mesa.estado),
+        )}>
           <span className={clsx(
             'h-1.5 w-1.5 rounded-full',
             mesa.estado === 'ocupada' && 'bg-terracotta-500',

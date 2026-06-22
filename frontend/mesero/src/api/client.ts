@@ -3,7 +3,7 @@ import axios, { AxiosError, AxiosHeaders, type InternalAxiosRequestConfig } from
 import { clearSession, getAccessToken, getRefreshToken, saveSession } from '@/auth/session';
 import type { TokenResponse } from '@/types/api';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/v1';
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/v1';
 
 type RetriableRequest = InternalAxiosRequestConfig & { _retry?: boolean };
 

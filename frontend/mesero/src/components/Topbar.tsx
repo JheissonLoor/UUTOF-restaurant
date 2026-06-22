@@ -29,7 +29,7 @@ function formatCurrency(value: number): string {
 export function Topbar({ meseroNombre, mesas, searchTerm, onSearchChange }: TopbarProps): JSX.Element {
   const stats = useMemo(() => {
     const ventas = mesas.reduce((total, mesa) => total + (mesa.pedido_activo?.total ?? 0), 0);
-    const activas = mesas.filter((mesa) => mesa.estado !== 'libre').length;
+    const activas = mesas.filter((mesa) => mesa.estado === 'ocupada' || mesa.estado === 'lista').length;
     const comensales = mesas.reduce((total, mesa) => total + (mesa.pedido_activo?.comensales ?? 0), 0);
     return { ventas, activas, comensales };
   }, [mesas]);
