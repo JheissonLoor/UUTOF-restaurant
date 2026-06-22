@@ -20,3 +20,8 @@ export async function generarCuenta(idPedido: number): Promise<{ folio: string; 
   const response = await apiClient.post<{ folio: string; qr_url: string; total: number }>(`/pedidos/${idPedido}/cuenta`);
   return response.data;
 }
+
+export async function llamarCocina(idPedido: number): Promise<{ ok: boolean }> {
+  const response = await apiClient.post<{ ok: boolean }>(`/pedidos/${idPedido}/llamar-cocina`);
+  return response.data;
+}

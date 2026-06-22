@@ -8,7 +8,10 @@ interface UseWebSocketOptions {
 }
 
 function isWSEvent(value: unknown): value is WSEvent {
-  return typeof value === 'object' && value !== null && 'tipo' in value && typeof value.tipo === 'string';
+  if (typeof value !== 'object' || value === null || !('tipo' in value) || typeof value.tipo !== 'string') {
+    return false;
+  }
+  return ['pedido.listo', 'pedido.item_listo', 'pedido.pagado_app', 'mesa.checkin'].includes(value.tipo);
 }
 
 export function useWebSocket({ onEvent }: UseWebSocketOptions): void {
@@ -16,10 +19,8 @@ export function useWebSocket({ onEvent }: UseWebSocketOptions): void {
   callbackRef.current = onEvent;
 
   useEffect(() => {
-    const enabled = import.meta.env.VITE_WS_ENABLED === 'true';
-    const token = getAccessToken();
-    if (!enabled || !token) return undefined;
-    const accessToken: string = token;
+    const enabled = import.meta.env.VITE_WS_ENABLED !== 'false';
+    if (!enabled || !getAccessToken()) return undefined;
 
     const wsBase = import.meta.env.VITE_WS_URL ?? 'ws://127.0.0.1:8000/ws';
     let socket: WebSocket | null = null;
@@ -27,6 +28,8 @@ export function useWebSocket({ onEvent }: UseWebSocketOptions): void {
     let disposed = false;
 
     function connect(): void {
+      const accessToken = getAccessToken();
+      if (!accessToken || disposed) return;
       socket = new WebSocket(`${wsBase}?token=${encodeURIComponent(accessToken)}`);
       socket.addEventListener('message', (message) => {
         try {
