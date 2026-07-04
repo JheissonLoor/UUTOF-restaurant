@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Literal
 
 from app.entidad.mesa.dominio.mesa import EstadoMesa
@@ -28,3 +28,11 @@ class MesaPublica(BaseModel):
 
 class MesaEstadoPatchRequest(BaseModel):
     estado: EstadoMesa
+
+
+class SentarComensalesRequest(BaseModel):
+    comensales: int = Field(gt=0, le=50)
+
+
+class SentarComensalesResponse(BaseModel):
+    id_pedido: int

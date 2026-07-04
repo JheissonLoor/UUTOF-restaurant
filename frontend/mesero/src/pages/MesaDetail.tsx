@@ -3,16 +3,21 @@ import { ArrowLeft, Check, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { getErrorDetail } from '@/api/errors';
+import { registrarPago } from '@/api/pagos';
 import { entregarPedidoItem, getPedido, llamarCocina } from '@/api/pedidos';
 import { DetailFooter } from '@/components/DetailFooter';
 import { OrderCard } from '@/components/OrderCard';
 import { OrderItem } from '@/components/OrderItem';
+import { PaySuccess } from '@/components/PaySuccess';
 import { QuickActions } from '@/components/QuickActions';
-import type { Mesa, PedidoItem } from '@/types/api';
+import { PaySheet } from '@/components/sheets/PaySheet';
+import type { Mesa, MetodoPago, PedidoItem } from '@/types/api';
 
 interface MesaDetailProps {
   mesa: Mesa;
   onBack: () => void;
+  onAddDishes: () => void;
+  onPaid: () => void;
 }
 
 const zoneLabels = {
@@ -22,9 +27,11 @@ const zoneLabels = {
   privado: 'Privado',
 } as const;
 
-export function MesaDetail({ mesa, onBack }: MesaDetailProps): JSX.Element {
+export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProps): JSX.Element {
   const queryClient = useQueryClient();
   const [toast, setToast] = useState<string | null>(null);
+  const [isPayOpen, setIsPayOpen] = useState(false);
+  const [showPaySuccess, setShowPaySuccess] = useState(false);
   const idPedido = mesa.pedido_activo?.id_pedido;
 
   const pedidoQuery = useQuery({
@@ -58,6 +65,25 @@ export function MesaDetail({ mesa, onBack }: MesaDetailProps): JSX.Element {
     onError: (error) => setToast(getErrorDetail(error, 'No se pudo contactar a cocina')),
   });
 
+  const payMutation = useMutation({
+    mutationFn: ({ metodo, propina, recibido }: { metodo: MetodoPago; propina: number; recibido?: number }) => {
+      if (!pedidoQuery.data) throw new Error('Pedido no cargado');
+      return registrarPago({
+        id_pedido: pedidoQuery.data.id_pedido,
+        metodo,
+        monto: pedidoQuery.data.total,
+        propina,
+        recibido,
+      });
+    },
+    onSuccess: () => {
+      setIsPayOpen(false);
+      setShowPaySuccess(true);
+      void queryClient.invalidateQueries({ queryKey: ['mesas', 'mesero'] });
+    },
+    onError: (error) => setToast(getErrorDetail(error, 'No se pudo registrar el pago')),
+  });
+
   const summary = useMemo(() => {
     const items = pedidoQuery.data?.items ?? [];
     return {
@@ -70,7 +96,7 @@ export function MesaDetail({ mesa, onBack }: MesaDetailProps): JSX.Element {
     deliveryMutation.mutate({ idDetalle: item.id_detalle });
   }
 
-  const subtitle = `${mesa.zona ? zoneLabels[mesa.zona] : 'Sin zona'} · ${mesa.pedido_activo?.comensales ?? 0} comensales · ${mesa.pedido_activo?.minutos ?? 0} min`;
+  const subtitle = `${mesa.zona ? zoneLabels[mesa.zona] : 'Sin zona'} - ${mesa.pedido_activo?.comensales ?? 0} comensales - ${mesa.pedido_activo?.minutos ?? 0} min`;
 
   return (
     <main className="relative flex h-[100dvh] flex-col overflow-hidden bg-cream-50 text-ink-900" data-screen-label="02 Detalle">
@@ -119,7 +145,7 @@ export function MesaDetail({ mesa, onBack }: MesaDetailProps): JSX.Element {
 
             <div className="flex items-center justify-between gap-3 pt-1">
               <h2 className="font-serif text-[17px] font-semibold">Orden actual</h2>
-              <span className="text-[11.5px] text-ink-500">{summary.platos} platos · {summary.unidades} unidades</span>
+              <span className="text-[11.5px] text-ink-500">{summary.platos} platos - {summary.unidades} unidades</span>
             </div>
 
             <section className="overflow-hidden rounded-lg border border-[rgba(31,26,20,0.08)] bg-white">
@@ -138,7 +164,17 @@ export function MesaDetail({ mesa, onBack }: MesaDetailProps): JSX.Element {
         ) : null}
       </section>
 
-      <DetailFooter />
+      <DetailFooter onAddDishes={onAddDishes} onCharge={() => setIsPayOpen(true)} />
+
+      <PaySheet
+        open={isPayOpen}
+        pedido={pedidoQuery.data ?? null}
+        isSubmitting={payMutation.isPending}
+        onClose={() => setIsPayOpen(false)}
+        onConfirm={(payload) => payMutation.mutate(payload)}
+      />
+
+      <PaySuccess open={showPaySuccess} onDone={onPaid} />
 
       <div className={`pointer-events-none absolute bottom-24 left-1/2 z-40 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-ink-900 px-4 py-2.5 text-xs font-semibold text-white shadow-lg-soft transition ${toast ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`} role="status">
         <span className="grid h-5 w-5 place-items-center rounded-full bg-sage-500"><Check aria-hidden="true" size={12} strokeWidth={3} /></span>

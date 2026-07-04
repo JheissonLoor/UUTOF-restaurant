@@ -123,3 +123,52 @@ async def actualizar_estado_mesa(
     )
     await session.commit()
     return await obtener_mesa(session, id_mesa)
+
+
+async def obtener_mesa_base(session: AsyncSession, id_mesa: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_mesa, numero, capacidad, estado, id_mesero
+            FROM mesa
+            WHERE id_mesa = :id_mesa
+            LIMIT 1
+            """
+        ),
+        {"id_mesa": id_mesa},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
+async def crear_pedido_para_mesa(
+    session: AsyncSession,
+    *,
+    id_mesa: int,
+    id_mesero: int,
+    comensales: int,
+) -> int:
+    await session.execute(
+        text(
+            """
+            UPDATE mesa
+            SET estado = 'ocupada',
+                id_mesero = COALESCE(id_mesero, :id_mesero)
+            WHERE id_mesa = :id_mesa
+            """
+        ),
+        {"id_mesa": id_mesa, "id_mesero": id_mesero},
+    )
+    await session.execute(
+        text(
+            """
+            INSERT INTO pedido (id_usuario, id_mesa, comensales, estado, total)
+            VALUES (:id_mesero, :id_mesa, :comensales, 'creado', 0)
+            """
+        ),
+        {"id_mesero": id_mesero, "id_mesa": id_mesa, "comensales": comensales},
+    )
+    result = await session.execute(text("SELECT LAST_INSERT_ID()"))
+    id_pedido = int(result.scalar_one())
+    await session.commit()
+    return id_pedido

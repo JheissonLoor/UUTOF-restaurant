@@ -1,6 +1,8 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from decimal import Decimal
+
+from pydantic import BaseModel, Field
 
 
 class PedidoItemPublico(BaseModel):
@@ -21,3 +23,20 @@ class PedidoPublico(BaseModel):
     comensales: int
     total: float
     items: list[PedidoItemPublico]
+
+
+class PedidoItemCreateRequest(BaseModel):
+    id_platillo: int = Field(gt=0)
+    qty: int = Field(gt=0, le=50)
+    nota: str | None = Field(default=None, max_length=300)
+    modificadores: dict[str, str] | None = None
+
+
+class PedidoItemsCreateRequest(BaseModel):
+    items: list[PedidoItemCreateRequest] = Field(min_length=1, max_length=30)
+
+
+class CuentaResponse(BaseModel):
+    folio: str
+    qr_url: str
+    total: Decimal

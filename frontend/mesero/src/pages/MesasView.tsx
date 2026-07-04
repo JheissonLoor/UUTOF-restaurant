@@ -14,6 +14,7 @@ import type { Mesa, WSEvent } from '@/types/api';
 interface MesasViewProps {
   meseroNombre: string;
   onOpenMesa?: (mesa: Mesa) => void;
+  onSeatMesa?: (mesa: Mesa) => void;
 }
 
 function matchesFilter(mesa: Mesa, filter: MesaFilter): boolean {
@@ -59,7 +60,7 @@ function MesaGridSkeleton(): JSX.Element {
   );
 }
 
-export function MesasView({ meseroNombre, onOpenMesa }: MesasViewProps): JSX.Element {
+export function MesasView({ meseroNombre, onOpenMesa, onSeatMesa }: MesasViewProps): JSX.Element {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<MesaFilter>('todas');
   const [searchTerm, setSearchTerm] = useState('');
@@ -137,7 +138,7 @@ export function MesasView({ meseroNombre, onOpenMesa }: MesasViewProps): JSX.Ele
 
         {visibleMesas.length > 0 ? (
           <div className="grid grid-cols-2 gap-3">
-            {visibleMesas.map((mesa) => <MesaCard key={mesa.id_mesa} mesa={mesa} onOpen={onOpenMesa} />)}
+            {visibleMesas.map((mesa) => <MesaCard key={mesa.id_mesa} mesa={mesa} onOpen={onOpenMesa} onSeat={onSeatMesa} />)}
           </div>
         ) : null}
       </section>

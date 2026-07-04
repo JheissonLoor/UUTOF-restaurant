@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.db.client import engine
 from app.entidad.menu.infraestructura.router import router as menu_router
 from app.entidad.mesa.infraestructura.router import router as mesa_router
+from app.entidad.pago.infraestructura.router import router as pago_router
 from app.entidad.pedido.infraestructura.router import router as pedido_router
 from app.entidad.reserva.infraestructura.router import router as reserva_router
 from app.entidad.usuario.infraestructura.router import router as usuario_router
@@ -21,7 +22,7 @@ from app.utilidad.realtime.infraestructura.router import router as realtime_rout
 class AppSettings(BaseSettings):
     app_name: str = "UTTOF Restaurant API"
     app_version: str = "1.0"
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -58,6 +59,7 @@ def create_app() -> FastAPI:
     app.include_router(usuario_router)
     app.include_router(mesa_router)
     app.include_router(pedido_router)
+    app.include_router(pago_router)
     app.include_router(menu_router)
     app.include_router(reserva_router)
     app.include_router(reporte_router)

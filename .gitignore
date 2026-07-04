@@ -1,18 +1,43 @@
 # Python
+.venv/
+venv/
+backend/.venv/
 backend/venv/
-backend/.env
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Node
-frontend/node_modules/
-frontend/.env
+# Environment
+.env
+*.env.local
+backend/.env
+frontend/**/.env
+
+# Node / frontend
+node_modules/
+frontend/**/node_modules/
+frontend/**/dist/
 
 # Logs
 *.log
 
-# OS
+# Local archives / accidental root installs
+*.zip
+/package-lock.json
+/frontend/package-lock.json
+/README (1).md
+
+# Runtime local data
+backend/storage/
+
+# OS / editors
 .DS_Store
 Thumbs.db
+.idea/
+.vscode/

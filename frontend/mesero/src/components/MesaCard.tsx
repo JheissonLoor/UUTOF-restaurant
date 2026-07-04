@@ -6,6 +6,7 @@ import type { Mesa, MesaEstado, ZonaMesa } from '@/types/api';
 interface MesaCardProps {
   mesa: Mesa;
   onOpen?: (mesa: Mesa) => void;
+  onSeat?: (mesa: Mesa) => void;
 }
 
 const statusLabels: Record<MesaEstado, string> = {
@@ -45,22 +46,27 @@ function statusClasses(estado: MesaEstado): string {
   return 'bg-cream-100 text-ink-500';
 }
 
-export function MesaCard({ mesa, onOpen }: MesaCardProps): JSX.Element {
+export function MesaCard({ mesa, onOpen, onSeat }: MesaCardProps): JSX.Element {
   const pedido = mesa.pedido_activo;
   const canOpen = (mesa.estado === 'ocupada' || mesa.estado === 'lista') && Boolean(onOpen);
+  const canSeat = mesa.estado === 'libre' && Boolean(onSeat);
+  const canInteract = canOpen || canSeat;
   const isAvailable = mesa.estado === 'libre';
   const alertCount = pedido?.alerta ?? (mesa.estado === 'lista' ? 1 : 0);
 
   return (
     <button
       type="button"
-      disabled={!canOpen}
+      disabled={!canInteract}
       className={clsx(
         'relative flex min-h-[136px] w-full flex-col gap-2 rounded-lg border-[1.5px] p-3.5 text-left transition active:scale-[0.97] disabled:cursor-default disabled:opacity-100',
         stateClasses(mesa.estado),
         mesa.estado === 'lista' && 'animate-[count-in_500ms_ease-out]',
       )}
-      onClick={() => onOpen?.(mesa)}
+      onClick={() => {
+        if (canOpen) onOpen?.(mesa);
+        if (canSeat) onSeat?.(mesa);
+      }}
     >
       {alertCount > 0 ? (
         <span className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full border-2 border-white bg-terracotta-500 text-[11px] font-bold text-white shadow-md-soft" aria-label="Requiere atencion">

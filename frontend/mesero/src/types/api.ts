@@ -71,6 +71,26 @@ export interface Pedido {
   items: PedidoItem[];
 }
 
+export interface Categoria {
+  id_categoria: number;
+  nombre: string;
+  orden: number;
+}
+
+export interface Platillo {
+  id_platillo: number;
+  id_categoria: number | null;
+  nombre: string;
+  precio: number;
+  disponible: boolean;
+  imagen_url: string | null;
+}
+
+export interface CursorPage<T> {
+  data: T[];
+  next_cursor: string | null;
+}
+
 export interface PedidoItemWrite {
   id_platillo: number;
   qty: number;

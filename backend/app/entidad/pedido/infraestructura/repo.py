@@ -1,6 +1,7 @@
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -146,3 +147,129 @@ async def entregar_item(session: AsyncSession, id_pedido: int, id_detalle: int) 
     if pedido is None:
         raise RuntimeError("El pedido desaparecio despues de entregar el item")
     return pedido
+
+
+async def obtener_pedido_base(session: AsyncSession, id_pedido: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT p.id_pedido, p.id_mesa, p.estado, p.total, m.id_mesero
+            FROM pedido p
+            INNER JOIN mesa m ON m.id_mesa = p.id_mesa
+            WHERE p.id_pedido = :id_pedido
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
+async def obtener_platillos_para_items(session: AsyncSession, ids_platillos: list[int]) -> dict[int, dict[str, Any]]:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_platillo, nombre, precio, disponible
+            FROM platillo
+            WHERE id_platillo IN :ids_platillos
+            """
+        ).bindparams(bindparam("ids_platillos", expanding=True)),
+        {"ids_platillos": ids_platillos},
+    )
+    platillos: dict[int, dict[str, Any]] = {}
+    for row in result.all():
+        data = dict(row._mapping)
+        platillos[int(data["id_platillo"])] = data
+    return platillos
+
+
+async def agregar_items(
+    session: AsyncSession,
+    *,
+    id_pedido: int,
+    items: list[dict[str, Any]],
+) -> dict[str, Any]:
+    ids_platillos = sorted({int(item["id_platillo"]) for item in items})
+    platillos = await obtener_platillos_para_items(session, ids_platillos)
+
+    for item in items:
+        id_platillo = int(item["id_platillo"])
+        platillo = platillos.get(id_platillo)
+        if platillo is None or not bool(platillo["disponible"]):
+            raise ValueError(f"Platillo no disponible: {id_platillo}")
+
+        qty = int(item["qty"])
+        precio = Decimal(str(platillo["precio"]))
+        subtotal = precio * qty
+        nota = item.get("nota")
+        modificadores = item.get("modificadores") or {}
+        if modificadores:
+            extras = ", ".join(f"{key}: {value}" for key, value in sorted(modificadores.items()) if value)
+            nota = f"{nota}; {extras}" if nota else extras
+
+        await session.execute(
+            text(
+                """
+                INSERT INTO detalle_pedido
+                  (id_pedido, id_platillo, cantidad, subtotal, notas, curso, estado_item)
+                VALUES
+                  (:id_pedido, :id_platillo, :cantidad, :subtotal, :notas, 'Plato fuerte', 'en_cocina')
+                """
+            ),
+            {
+                "id_pedido": id_pedido,
+                "id_platillo": id_platillo,
+                "cantidad": qty,
+                "subtotal": subtotal,
+                "notas": nota,
+            },
+        )
+
+    await session.execute(
+        text(
+            """
+            UPDATE pedido p
+            SET p.total = (
+                SELECT COALESCE(SUM(dp.subtotal), 0)
+                FROM detalle_pedido dp
+                WHERE dp.id_pedido = :id_pedido
+            ),
+            p.estado = 'en_cocina'
+            WHERE p.id_pedido = :id_pedido
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    await session.execute(
+        text(
+            """
+            UPDATE mesa m
+            INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+            SET m.estado = 'ocupada'
+            WHERE p.id_pedido = :id_pedido
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    await session.commit()
+    pedido = await obtener_pedido(session, id_pedido)
+    if pedido is None:
+        raise RuntimeError("No se pudo recuperar el pedido actualizado")
+    return pedido
+
+
+async def obtener_total_pedido(session: AsyncSession, id_pedido: int) -> Decimal | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT total
+            FROM pedido
+            WHERE id_pedido = :id_pedido
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    total = result.scalar_one_or_none()
+    return Decimal(str(total)) if total is not None else None

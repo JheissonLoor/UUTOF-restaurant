@@ -7,7 +7,13 @@ from app.db.client import get_session
 from app.entidad.mesa.aplicacion.actualizar_estado_mesa import actualizar_estado_mesa
 from app.entidad.mesa.aplicacion.checkin_mesa import checkin_mesa
 from app.entidad.mesa.aplicacion.listar_mesas import listar_mesas
-from app.entidad.mesa.infraestructura.schemas import MesaEstadoPatchRequest, MesaPublica
+from app.entidad.mesa.aplicacion.sentar_comensales import sentar_comensales
+from app.entidad.mesa.infraestructura.schemas import (
+    MesaEstadoPatchRequest,
+    MesaPublica,
+    SentarComensalesRequest,
+    SentarComensalesResponse,
+)
 from app.utilidad.rbac.infraestructura.deps import requires
 
 
@@ -41,3 +47,13 @@ async def post_checkin_mesa(
     actor: dict = Depends(requires("cliente")),
 ) -> MesaPublica:
     return await checkin_mesa(session, id)
+
+
+@router.post("/{id}/sentar", response_model=SentarComensalesResponse)
+async def post_sentar_comensales(
+    id: int,
+    data: SentarComensalesRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("mesero", "admin")),
+) -> SentarComensalesResponse:
+    return await sentar_comensales(session, id, data, actor)
