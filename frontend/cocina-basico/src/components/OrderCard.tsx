@@ -2,12 +2,13 @@ import clsx from 'clsx';
 
 import { ClockIcon, MoveIcon, TableIcon, UserIcon } from '@/components/icons';
 import { formatCurrency } from '@/lib/format';
-import type { BoardColumn, KitchenOrder, OrderStatus } from '@/types';
+import type { BoardColumn, KitchenOrder, PedidoTransition } from '@/types';
 
 interface OrderCardProps {
   order: KitchenOrder;
   column: BoardColumn;
-  onAdvance: (idPedido: number, nextStatus: OrderStatus) => void;
+  onAdvance: (idPedido: number, transition: PedidoTransition) => void;
+  isAdvancing?: boolean;
 }
 
 const badgeClasses: Record<BoardColumn['accent'], string> = {
@@ -24,7 +25,7 @@ const actionClasses: Record<NonNullable<BoardColumn['actionTone']>, string> = {
   sky: 'bg-sky-50 text-sky-600 hover:bg-sky-50/80',
 };
 
-export function OrderCard({ order, column, onAdvance }: OrderCardProps): JSX.Element {
+export function OrderCard({ order, column, onAdvance, isAdvancing = false }: OrderCardProps): JSX.Element {
   const isHot = order.minutos > 20 && order.estado !== 'entregado' && order.estado !== 'pagado';
 
   return (
@@ -67,14 +68,18 @@ export function OrderCard({ order, column, onAdvance }: OrderCardProps): JSX.Ele
         <span className="font-serif text-[16px] font-bold text-ink-900">{formatCurrency(order.total)}</span>
       </div>
 
-      {column.actionLabel && column.nextStatus ? (
+      {column.actionLabel && column.transition ? (
         <button
           type="button"
-          className={clsx('mt-2.5 flex w-full items-center justify-center gap-2 rounded-sm px-3 py-2.5 text-[13px] font-semibold transition', actionClasses[column.actionTone ?? 'coral'])}
-          onClick={() => onAdvance(order.id_pedido, column.nextStatus as OrderStatus)}
+          disabled={isAdvancing}
+          className={clsx(
+            'mt-2.5 flex w-full items-center justify-center gap-2 rounded-sm px-3 py-2.5 text-[13px] font-semibold transition disabled:cursor-wait disabled:opacity-65',
+            actionClasses[column.actionTone ?? 'coral'],
+          )}
+          onClick={() => onAdvance(order.id_pedido, column.transition)}
         >
           <MoveIcon size={14} />
-          {column.actionLabel}
+          {isAdvancing ? 'Actualizando...' : column.actionLabel}
         </button>
       ) : null}
     </article>

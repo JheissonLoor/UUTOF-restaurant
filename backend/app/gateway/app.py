@@ -22,7 +22,7 @@ from app.utilidad.realtime.infraestructura.router import router as realtime_rout
 class AppSettings(BaseSettings):
     app_name: str = "UTTOF Restaurant API"
     app_version: str = "1.0"
-    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174,http://localhost:5175,http://127.0.0.1:5175"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

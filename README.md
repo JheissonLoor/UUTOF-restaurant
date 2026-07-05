@@ -1,6 +1,6 @@
 # UTTOF - Plataforma SOA para Gestion de Restaurante
 
-UTTOF es un proyecto academico de Arquitectura de Software orientado a la gestion operativa de un restaurante peruano. El sistema usa una arquitectura SOA sobre un monolito modular, con backend en FastAPI, base de datos MySQL y frontends independientes para administracion y mesero.
+UTTOF es un proyecto academico de Arquitectura de Software orientado a la gestion operativa de un restaurante peruano. El sistema usa una arquitectura SOA sobre un monolito modular, con backend en FastAPI, base de datos MySQL y frontends independientes para administracion, mesero y cocina.
 
 ## Stack
 
@@ -42,10 +42,12 @@ backend/
 frontend/
   admin/
   mesero/
+  cocina-basico/
 
 docs/
   arquitectura.html
 
+design_handoff_cocina_basico/
 design_handoff_mesero/
 design_handoff_panel_admin/
 ```
@@ -71,7 +73,7 @@ Backend:
 - Usuarios: listar, obtener y actualizar.
 - Menu: categorias, platillos, creacion y actualizacion.
 - Mesas: listado, estado, check-in y sentar comensales.
-- Pedidos: detalle, agregar items, llamar cocina, marcar item entregado y generar cuenta.
+- Pedidos: listado para cocina, cambio de estado por flujo, detalle, agregar items, llamar cocina, marcar item entregado y generar cuenta.
 - Pagos: registro de pago, cambio para efectivo, cierre de pedido y liberacion de mesa.
 - Reportes: dashboard y ventas.
 - Configuracion base del restaurante.
@@ -99,9 +101,18 @@ Frontend Mesero:
 - Cobrar cuenta con tarjeta, efectivo o Yape.
 - Liberar mesa despues del pago.
 
+Frontend Cocina Basico:
+
+- Login para rol cocina o admin.
+- Tablero kanban claro con columnas: en espera, en preparacion, terminado, por pagar y pagado.
+- Polling cada 20 segundos contra el backend real.
+- Avance manual del pedido completo: empezar preparacion, marcar terminado y entregar a mesa.
+- Filtros por estado con contador.
+- Estados de carga, error, vacio y toast de confirmacion.
+
 ## Pendiente
 
-- App Cocina/KDS.
+- App Cocina/KDS Premium.
 - App Cliente.
 - Division avanzada de cuenta.
 - Cambio de mesa.
@@ -184,6 +195,20 @@ URL:
 http://127.0.0.1:5174
 ```
 
+## Levantar Panel Cocina Basico
+
+```powershell
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina-basico"
+npm.cmd install
+npm.cmd run dev
+```
+
+URL:
+
+```text
+http://127.0.0.1:5175
+```
+
 ## Credenciales Demo
 
 ```text
@@ -210,5 +235,8 @@ cd frontend/admin
 npm.cmd run build
 
 cd frontend/mesero
+npm.cmd run build
+
+cd frontend/cocina-basico
 npm.cmd run build
 ```

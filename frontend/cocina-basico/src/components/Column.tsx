@@ -1,13 +1,14 @@
 import clsx from 'clsx';
 
-import { EmptyIcon } from '@/components/icons';
 import { OrderCard } from '@/components/OrderCard';
-import type { BoardColumn, KitchenOrder, OrderStatus } from '@/types';
+import { EmptyState } from '@/components/ui/EmptyState';
+import type { BoardColumn, KitchenOrder, PedidoTransition } from '@/types';
 
 interface ColumnProps {
   column: BoardColumn;
   orders: KitchenOrder[];
-  onAdvance: (idPedido: number, nextStatus: OrderStatus) => void;
+  onAdvance: (idPedido: number, transition: PedidoTransition) => void;
+  advancingId?: number | null;
 }
 
 const dotClasses: Record<BoardColumn['accent'], string> = {
@@ -18,7 +19,7 @@ const dotClasses: Record<BoardColumn['accent'], string> = {
   plum: 'bg-plum',
 };
 
-export function Column({ column, orders, onAdvance }: ColumnProps): JSX.Element {
+export function Column({ column, orders, onAdvance, advancingId = null }: ColumnProps): JSX.Element {
   return (
     <section className="flex min-h-[420px] flex-col overflow-hidden rounded-lg border border-[rgba(31,26,20,0.08)] bg-cream-bg2">
       <header className="flex items-center gap-2 border-b border-[rgba(31,26,20,0.08)] bg-cream-surface px-4 py-3.5">
@@ -31,17 +32,10 @@ export function Column({ column, orders, onAdvance }: ColumnProps): JSX.Element 
 
       <div className="scrollbar-thin flex flex-1 flex-col gap-3 overflow-y-auto p-3">
         {orders.length === 0 ? (
-          <div className="grid flex-1 place-items-center px-4 py-10 text-center text-[13px] text-ink-400">
-            <div>
-              <div className="mb-2 flex justify-center opacity-50">
-                <EmptyIcon size={26} />
-              </div>
-              Sin pedidos
-            </div>
-          </div>
+          <EmptyState />
         ) : (
           orders.map((order) => (
-            <OrderCard key={order.id_pedido} order={order} column={column} onAdvance={onAdvance} />
+            <OrderCard key={order.id_pedido} order={order} column={column} onAdvance={onAdvance} isAdvancing={advancingId === order.id_pedido} />
           ))
         )}
       </div>

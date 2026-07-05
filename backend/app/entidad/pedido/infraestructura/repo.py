@@ -5,6 +5,213 @@ from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
+COCINA_TO_DB_ESTADO = {
+    "espera": "creado",
+    "cocina": "en_cocina",
+    "listo": "listo",
+    "entregado": "entregado",
+    "pagado": "pagado",
+}
+
+DB_TO_COCINA_ESTADO = {value: key for key, value in COCINA_TO_DB_ESTADO.items()}
+
+COCINA_TRANSICIONES = {
+    "empezarPreparacion": ("creado", "en_cocina"),
+    "marcarTerminado": ("en_cocina", "listo"),
+    "entregarMesa": ("listo", "entregado"),
+}
+
+
+async def listar_pedidos_cocina(
+    session: AsyncSession,
+    estados: list[str],
+    id_pedido: int | None = None,
+) -> list[dict[str, Any]]:
+    db_estados = [COCINA_TO_DB_ESTADO[estado] for estado in estados]
+    params: dict[str, Any] = {"estados": db_estados}
+    id_filter = ""
+    if id_pedido is not None:
+        id_filter = "AND p.id_pedido = :id_pedido"
+        params["id_pedido"] = id_pedido
+
+    pedidos_result = await session.execute(
+        text(
+            f"""
+            SELECT
+              p.id_pedido,
+              COALESCE(NULLIF(u.nombre, ''), CONCAT('Cliente mesa ', m.numero)) AS cliente,
+              m.numero AS mesa,
+              p.estado AS db_estado,
+              GREATEST(TIMESTAMPDIFF(MINUTE, p.creado_en, NOW()), 0) AS minutos,
+              p.total
+            FROM pedido p
+            INNER JOIN mesa m ON m.id_mesa = p.id_mesa
+            LEFT JOIN usuario u ON u.id_usuario = p.id_usuario
+            WHERE p.estado IN :estados
+              {id_filter}
+            ORDER BY FIELD(p.estado, 'creado', 'en_cocina', 'listo', 'entregado', 'pagado'),
+                     p.creado_en ASC,
+                     p.id_pedido ASC
+            """
+        ).bindparams(bindparam("estados", expanding=True)),
+        params,
+    )
+    pedido_rows = pedidos_result.all()
+    if not pedido_rows:
+        return []
+
+    pedidos: list[dict[str, Any]] = []
+    pedido_ids: list[int] = []
+    for row in pedido_rows:
+        data = dict(row._mapping)
+        id_actual = int(data["id_pedido"])
+        pedido_ids.append(id_actual)
+        pedidos.append(
+            {
+                "id_pedido": id_actual,
+                "cliente": str(data["cliente"]),
+                "mesa": int(data["mesa"]),
+                "estado": DB_TO_COCINA_ESTADO[str(data["db_estado"])],
+                "minutos": int(data["minutos"] or 0),
+                "total": float(data["total"] or 0),
+                "items": [],
+            }
+        )
+
+    items_result = await session.execute(
+        text(
+            """
+            SELECT
+              dp.id_pedido,
+              dp.cantidad AS qty,
+              pl.nombre,
+              dp.notas AS nota
+            FROM detalle_pedido dp
+            INNER JOIN platillo pl ON pl.id_platillo = dp.id_platillo
+            WHERE dp.id_pedido IN :pedido_ids
+            ORDER BY dp.id_pedido, dp.id_detalle
+            """
+        ).bindparams(bindparam("pedido_ids", expanding=True)),
+        {"pedido_ids": pedido_ids},
+    )
+
+    items_by_pedido: dict[int, list[dict[str, Any]]] = {id_actual: [] for id_actual in pedido_ids}
+    for row in items_result.all():
+        data = dict(row._mapping)
+        items_by_pedido[int(data["id_pedido"])].append(
+            {
+                "qty": int(data["qty"]),
+                "nombre": str(data["nombre"]),
+                "nota": data["nota"],
+            }
+        )
+
+    for pedido in pedidos:
+        pedido["items"] = items_by_pedido[pedido["id_pedido"]]
+
+    return pedidos
+
+
+async def cambiar_estado_pedido_cocina(
+    session: AsyncSession,
+    id_pedido: int,
+    transicion: str,
+) -> dict[str, Any] | None:
+    expected, next_status = COCINA_TRANSICIONES[transicion]
+    current_result = await session.execute(
+        text(
+            """
+            SELECT estado
+            FROM pedido
+            WHERE id_pedido = :id_pedido
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    current_status = current_result.scalar_one_or_none()
+    if current_status is None:
+        return None
+
+    if str(current_status) != expected:
+        current_label = DB_TO_COCINA_ESTADO.get(str(current_status), str(current_status))
+        expected_label = DB_TO_COCINA_ESTADO[expected]
+        raise ValueError(f"El pedido esta en {current_label}; se esperaba {expected_label}")
+
+    await session.execute(
+        text(
+            """
+            UPDATE pedido
+            SET estado = :next_status
+            WHERE id_pedido = :id_pedido
+            """
+        ),
+        {"id_pedido": id_pedido, "next_status": next_status},
+    )
+
+    if next_status == "en_cocina":
+        await session.execute(
+            text(
+                """
+                UPDATE detalle_pedido
+                SET estado_item = 'en_cocina'
+                WHERE id_pedido = :id_pedido
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+    elif next_status == "listo":
+        await session.execute(
+            text(
+                """
+                UPDATE detalle_pedido
+                SET estado_item = 'ready'
+                WHERE id_pedido = :id_pedido
+                  AND estado_item = 'en_cocina'
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+        await session.execute(
+            text(
+                """
+                UPDATE mesa m
+                INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+                SET m.estado = 'lista'
+                WHERE p.id_pedido = :id_pedido
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+    elif next_status == "entregado":
+        await session.execute(
+            text(
+                """
+                UPDATE detalle_pedido
+                SET estado_item = 'delivered'
+                WHERE id_pedido = :id_pedido
+                  AND estado_item = 'ready'
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+        await session.execute(
+            text(
+                """
+                UPDATE mesa m
+                INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+                SET m.estado = 'ocupada'
+                WHERE p.id_pedido = :id_pedido
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+
+    await session.commit()
+    pedidos = await listar_pedidos_cocina(session, list(COCINA_TO_DB_ESTADO.keys()), id_pedido)
+    return pedidos[0] if pedidos else None
+
+
 async def obtener_pedido(session: AsyncSession, id_pedido: int) -> dict[str, Any] | None:
     pedido_result = await session.execute(
         text(

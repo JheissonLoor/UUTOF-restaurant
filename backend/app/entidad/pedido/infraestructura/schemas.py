@@ -40,3 +40,27 @@ class CuentaResponse(BaseModel):
     folio: str
     qr_url: str
     total: Decimal
+
+
+EstadoPedidoCocina = Literal["espera", "cocina", "listo", "entregado", "pagado"]
+TransicionPedidoCocina = Literal["empezarPreparacion", "marcarTerminado", "entregarMesa"]
+
+
+class PedidoCocinaItem(BaseModel):
+    qty: int
+    nombre: str
+    nota: str | None = None
+
+
+class PedidoCocinaResponse(BaseModel):
+    id_pedido: int
+    cliente: str
+    mesa: int
+    estado: EstadoPedidoCocina
+    minutos: int
+    total: float
+    items: list[PedidoCocinaItem]
+
+
+class PedidoEstadoUpdateRequest(BaseModel):
+    transicion: TransicionPedidoCocina

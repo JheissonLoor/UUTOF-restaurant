@@ -3,12 +3,14 @@ import type { ReactNode } from 'react';
 interface IconProps {
   size?: number;
   strokeWidth?: number;
+  className?: string;
 }
 
-function IconShell({ size = 16, strokeWidth = 1.8, children }: IconProps & { children: ReactNode }): JSX.Element {
+function IconShell({ size = 16, strokeWidth = 1.8, className, children }: IconProps & { children: ReactNode }): JSX.Element {
   return (
     <svg
       aria-hidden="true"
+      className={className}
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -20,6 +22,14 @@ function IconShell({ size = 16, strokeWidth = 1.8, children }: IconProps & { chi
     >
       {children}
     </svg>
+  );
+}
+
+export function CheckIcon(props: IconProps): JSX.Element {
+  return (
+    <IconShell {...props} strokeWidth={props.strokeWidth ?? 2.4}>
+      <path d="m4 12 5 5L20 6" />
+    </IconShell>
   );
 }
 
@@ -55,6 +65,24 @@ export function HashIcon(props: IconProps): JSX.Element {
   return (
     <IconShell {...props}>
       <path d="M9 3 7 21M17 3l-2 18M4 8h17M3 16h17" />
+    </IconShell>
+  );
+}
+
+export function LockIcon(props: IconProps): JSX.Element {
+  return (
+    <IconShell {...props}>
+      <rect x="5" y="10" width="14" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </IconShell>
+  );
+}
+
+export function MailIcon(props: IconProps): JSX.Element {
+  return (
+    <IconShell {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m4 7 8 6 8-6" />
     </IconShell>
   );
 }
