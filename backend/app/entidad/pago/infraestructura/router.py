@@ -14,6 +14,6 @@ router = APIRouter(prefix="/v1/pagos", tags=["Pagos"])
 async def post_pago(
     data: PagoCreateRequest,
     session: AsyncSession = Depends(get_session),
-    actor: dict = Depends(requires("mesero", "admin")),
+    actor: dict = Depends(requires("cliente", "mesero", "admin")),
 ) -> PagoResponse:
     return await registrar_pago(session, data, actor)

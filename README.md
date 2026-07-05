@@ -1,6 +1,6 @@
 # UTTOF - Plataforma SOA para Gestion de Restaurante
 
-UTTOF es un proyecto academico de Arquitectura de Software orientado a la gestion operativa de un restaurante peruano. El sistema usa una arquitectura SOA sobre un monolito modular, con backend en FastAPI, base de datos MySQL y frontends independientes para administracion, mesero y cocina.
+UTTOF es un proyecto academico de Arquitectura de Software orientado a la gestion operativa de un restaurante peruano. El sistema usa una arquitectura SOA sobre un monolito modular, con backend en FastAPI, base de datos MySQL y frontends independientes para administracion, mesero, cocina y cliente.
 
 ## Stack
 
@@ -41,6 +41,7 @@ backend/
 
 frontend/
   admin/
+  cliente/
   mesero/
   cocina-basico/
 
@@ -48,6 +49,7 @@ docs/
   arquitectura.html
 
 design_handoff_cocina_basico/
+design_handoff_cliente/
 design_handoff_mesero/
 design_handoff_panel_admin/
 ```
@@ -61,7 +63,7 @@ Actualmente el sistema maneja 4 roles:
 | `admin` | Gestiona dashboard, menu, mesas, reservas, usuarios, reportes y configuracion. |
 | `mesero` | Gestiona mesas asignadas, pedidos, platos listos y cobros. |
 | `cocina` | Rol preparado para KDS/cocina. |
-| `cliente` | Rol preparado para app cliente y check-in QR. |
+| `cliente` | Realiza check-in QR, consulta carta, envia pedidos, sigue estados, paga postpago, reserva y registra resenas. |
 
 ## Funcionalidades Implementadas
 
@@ -73,11 +75,12 @@ Backend:
 - Usuarios: listar, obtener y actualizar.
 - Menu: categorias, platillos, creacion y actualizacion.
 - Mesas: listado, estado, check-in y sentar comensales.
-- Pedidos: listado para cocina, cambio de estado por flujo, detalle, agregar items, llamar cocina, marcar item entregado y generar cuenta.
+- Pedidos: listado para cocina, cambio de estado por flujo, detalle, creacion desde cliente, agregar items, llamar cocina, marcar item entregado y generar cuenta.
 - Pagos: registro de pago, cambio para efectivo, cierre de pedido y liberacion de mesa.
+- Reservas y resenas para la experiencia del cliente.
 - Reportes: dashboard y ventas.
 - Configuracion base del restaurante.
-- WebSocket base para eventos realtime.
+- WebSocket base para eventos realtime con admin, mesero, cocina y cliente.
 
 Frontend Admin:
 
@@ -110,14 +113,25 @@ Frontend Cocina Basico:
 - Filtros por estado con contador.
 - Estados de carga, error, vacio y toast de confirmacion.
 
+Frontend Cliente:
+
+- Entrada walk-in con simulacion de escaneo QR y confirmacion de mesa.
+- Sesion automatica de cliente demo con JWT y refresh.
+- Carta publica conectada al backend real.
+- Carrito persistente en navegador por mesa.
+- Pedido directo a cocina usando `POST /v1/pedidos`.
+- Tracking del pedido con WebSocket y fallback por polling.
+- Checkout postpago con tarjeta, Yape, efectivo y mixto.
+- Reserva simple y registro de resena.
+- Estados de carga, error, vacio y confirmaciones visuales.
+
 ## Pendiente
 
 - App Cocina/KDS Premium.
-- App Cliente.
 - Division avanzada de cuenta.
 - Cambio de mesa.
-- QR de cuenta completo para pago desde app cliente.
-- Realtime completo entre cocina, mesero, cliente y admin.
+- QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
+- Realtime mas profundo por cada cambio de item y cuenta.
 - Pruebas automatizadas mas amplias.
 - Despliegue.
 
@@ -209,6 +223,20 @@ URL:
 http://127.0.0.1:5175
 ```
 
+## Levantar App Cliente
+
+```powershell
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cliente"
+npm.cmd install
+npm.cmd run dev
+```
+
+URL:
+
+```text
+http://127.0.0.1:5176
+```
+
 ## Credenciales Demo
 
 ```text
@@ -223,6 +251,10 @@ mesero123
 Cocina:
 cocina@uttof.pe
 cocina123
+
+Cliente:
+cliente@uttof.pe
+cliente123
 ```
 
 ## Validaciones Ejecutadas
@@ -238,5 +270,9 @@ cd frontend/mesero
 npm.cmd run build
 
 cd frontend/cocina-basico
+npm.cmd run build
+
+cd frontend/cliente
+npm.cmd run lint
 npm.cmd run build
 ```

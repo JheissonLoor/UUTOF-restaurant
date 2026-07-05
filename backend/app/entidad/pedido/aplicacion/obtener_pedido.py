@@ -14,5 +14,7 @@ async def obtener_pedido(session: AsyncSession, id_pedido: int, actor: dict[str,
 
     if actor["rol"] == "mesero" and not await repo.pertenece_a_mesero(session, id_pedido, int(actor["sub"])):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El pedido no pertenece a tus mesas")
+    if actor["rol"] == "cliente" and not await repo.pertenece_a_cliente(session, id_pedido, int(actor["sub"])):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El pedido no pertenece a tu sesion")
 
     return PedidoPublico(**pedido)

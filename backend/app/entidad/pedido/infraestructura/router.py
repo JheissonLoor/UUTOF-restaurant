@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.client import get_session
 from app.entidad.pedido.aplicacion.agregar_items import agregar_items_pedido
 from app.entidad.pedido.aplicacion.cambiar_estado_cocina import cambiar_estado_pedido_cocina
+from app.entidad.pedido.aplicacion.crear_pedido_cliente import crear_pedido_cliente
 from app.entidad.pedido.aplicacion.entregar_item import entregar_item
 from app.entidad.pedido.aplicacion.generar_cuenta import generar_cuenta
 from app.entidad.pedido.aplicacion.listar_pedidos_cocina import listar_pedidos_cocina
@@ -14,6 +15,8 @@ from app.entidad.pedido.aplicacion.notificar_cocina import notificar_cocina
 from app.entidad.pedido.infraestructura.schemas import (
     CuentaResponse,
     PedidoCocinaResponse,
+    PedidoCreateRequest,
+    PedidoCreateResponse,
     PedidoEstadoUpdateRequest,
     PedidoItemsCreateRequest,
     PedidoPublico,
@@ -22,6 +25,15 @@ from app.utilidad.rbac.infraestructura.deps import requires
 
 
 router = APIRouter(prefix="/v1/pedidos", tags=["Pedidos"])
+
+
+@router.post("", response_model=PedidoCreateResponse, status_code=201)
+async def post_pedido_cliente(
+    data: PedidoCreateRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict[str, Any] = Depends(requires("cliente", "admin")),
+) -> PedidoCreateResponse:
+    return await crear_pedido_cliente(session, data, actor)
 
 
 @router.get("", response_model=list[PedidoCocinaResponse])
@@ -48,7 +60,7 @@ async def patch_estado_pedido_cocina(
 async def get_pedido(
     id_pedido: int,
     session: AsyncSession = Depends(get_session),
-    actor: dict[str, Any] = Depends(requires("mesero", "admin")),
+    actor: dict[str, Any] = Depends(requires("cliente", "mesero", "admin")),
 ) -> PedidoPublico:
     return await obtener_pedido(session, id_pedido, actor)
 
@@ -58,7 +70,7 @@ async def post_pedido_items(
     id_pedido: int,
     data: PedidoItemsCreateRequest,
     session: AsyncSession = Depends(get_session),
-    actor: dict[str, Any] = Depends(requires("mesero", "admin")),
+    actor: dict[str, Any] = Depends(requires("cliente", "mesero", "admin")),
 ) -> PedidoPublico:
     return await agregar_items_pedido(session, id_pedido, data, actor)
 
@@ -77,7 +89,7 @@ async def patch_entregar_item(
 async def post_llamar_cocina(
     id_pedido: int,
     session: AsyncSession = Depends(get_session),
-    actor: dict[str, Any] = Depends(requires("mesero", "admin")),
+    actor: dict[str, Any] = Depends(requires("cliente", "mesero", "admin")),
 ) -> dict[str, bool]:
     return await notificar_cocina(session, id_pedido, actor)
 
@@ -86,6 +98,6 @@ async def post_llamar_cocina(
 async def post_cuenta(
     id_pedido: int,
     session: AsyncSession = Depends(get_session),
-    actor: dict[str, Any] = Depends(requires("mesero", "admin")),
+    actor: dict[str, Any] = Depends(requires("cliente", "mesero", "admin")),
 ) -> CuentaResponse:
     return await generar_cuenta(session, id_pedido, actor)

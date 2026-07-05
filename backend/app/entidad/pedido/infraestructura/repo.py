@@ -284,6 +284,22 @@ async def pertenece_a_mesero(session: AsyncSession, id_pedido: int, id_mesero: i
     return result.first() is not None
 
 
+async def pertenece_a_cliente(session: AsyncSession, id_pedido: int, id_cliente: int) -> bool:
+    result = await session.execute(
+        text(
+            """
+            SELECT 1
+            FROM pedido
+            WHERE id_pedido = :id_pedido
+              AND id_usuario = :id_cliente
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido, "id_cliente": id_cliente},
+    )
+    return result.first() is not None
+
+
 async def obtener_estado_item(session: AsyncSession, id_pedido: int, id_detalle: int) -> str | None:
     result = await session.execute(
         text(
@@ -371,6 +387,49 @@ async def obtener_pedido_base(session: AsyncSession, id_pedido: int) -> dict[str
     )
     row = result.first()
     return dict(row._mapping) if row is not None else None
+
+
+async def obtener_pedido_abierto_por_mesa(session: AsyncSession, id_mesa: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT p.id_pedido, p.id_mesa, p.estado, p.total, m.id_mesero
+            FROM pedido p
+            INNER JOIN mesa m ON m.id_mesa = p.id_mesa
+            WHERE p.id_mesa = :id_mesa
+              AND p.estado IN ('creado', 'en_cocina', 'listo', 'entregado')
+            ORDER BY p.creado_en DESC, p.id_pedido DESC
+            LIMIT 1
+            """
+        ),
+        {"id_mesa": id_mesa},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
+async def crear_pedido_base_cliente(session: AsyncSession, id_cliente: int, id_mesa: int) -> int:
+    await session.execute(
+        text(
+            """
+            UPDATE mesa
+            SET estado = 'ocupada'
+            WHERE id_mesa = :id_mesa
+            """
+        ),
+        {"id_mesa": id_mesa},
+    )
+    await session.execute(
+        text(
+            """
+            INSERT INTO pedido (id_usuario, id_mesa, comensales, estado, total)
+            VALUES (:id_cliente, :id_mesa, 1, 'creado', 0)
+            """
+        ),
+        {"id_cliente": id_cliente, "id_mesa": id_mesa},
+    )
+    result = await session.execute(text("SELECT LAST_INSERT_ID()"))
+    return int(result.scalar_one())
 
 
 async def obtener_platillos_para_items(session: AsyncSession, ids_platillos: list[int]) -> dict[int, dict[str, Any]]:

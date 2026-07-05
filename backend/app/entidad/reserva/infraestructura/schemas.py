@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ReservaPublica(BaseModel):
@@ -11,3 +11,10 @@ class ReservaPublica(BaseModel):
     hora_reserva: datetime
     num_personas: int
     notas_especiales: str | None = None
+
+
+class ReservaCreateRequest(BaseModel):
+    id_mesa: int = Field(gt=0)
+    hora_reserva: datetime
+    num_personas: int = Field(gt=0, le=50)
+    notas: str | None = Field(default=None, max_length=500)

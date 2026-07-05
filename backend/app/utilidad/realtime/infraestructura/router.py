@@ -15,7 +15,7 @@ async def realtime_socket(websocket: WebSocket, token: str = Query(min_length=1)
         await websocket.close(code=4401, reason="Token invalido")
         return
 
-    if payload.get("rol") not in {"mesero", "cocina", "admin"}:
+    if payload.get("rol") not in {"cliente", "mesero", "cocina", "admin"}:
         await websocket.close(code=4403, reason="Rol no autorizado")
         return
 

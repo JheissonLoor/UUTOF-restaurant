@@ -36,6 +36,17 @@ class PedidoItemsCreateRequest(BaseModel):
     items: list[PedidoItemCreateRequest] = Field(min_length=1, max_length=30)
 
 
+class PedidoCreateRequest(PedidoItemsCreateRequest):
+    id_mesa: int = Field(gt=0)
+
+
+class PedidoCreateResponse(BaseModel):
+    id_pedido: int
+    estado: Literal["creado", "en_cocina", "listo", "entregado", "pagado", "cancelado"]
+    total: float
+    folio: str
+
+
 class CuentaResponse(BaseModel):
     folio: str
     qr_url: str

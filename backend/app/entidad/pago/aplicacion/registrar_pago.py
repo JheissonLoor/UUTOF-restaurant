@@ -22,6 +22,8 @@ async def registrar_pago(session: AsyncSession, data: PagoCreateRequest, actor: 
         id_mesero = pedido.get("id_mesero")
         if id_mesero is None or int(id_mesero) != int(actor["sub"]):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El pedido no pertenece a tus mesas")
+    if actor["rol"] == "cliente" and int(pedido["id_usuario"]) != int(actor["sub"]):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="El pedido no pertenece a tu sesion")
 
     cambio: Decimal | None = None
     total_recibo = data.monto + data.propina

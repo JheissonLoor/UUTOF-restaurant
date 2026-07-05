@@ -9,7 +9,7 @@ async def obtener_pedido_pago(session: AsyncSession, id_pedido: int) -> dict[str
     result = await session.execute(
         text(
             """
-            SELECT p.id_pedido, p.id_mesa, p.estado, p.total, m.id_mesero
+            SELECT p.id_pedido, p.id_usuario, p.id_mesa, p.estado, p.total, m.id_mesero
             FROM pedido p
             INNER JOIN mesa m ON m.id_mesa = p.id_mesa
             WHERE p.id_pedido = :id_pedido
