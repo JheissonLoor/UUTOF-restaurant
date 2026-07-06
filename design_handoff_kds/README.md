@@ -29,7 +29,7 @@ El KDS es la pantalla que **recibe los pedidos apenas el mesero (o el cliente de
 - Diseño de **alto contraste, tema oscuro**, pensado para verse bien bajo luz de cocina y a distancia.
 - Tickets con **cronómetro en vivo** que cambia de color según tiempo transcurrido vs. objetivo.
 
-## 🚀 Prompt para Claude Code / Codex
+## 🚀 Prompt de implementacion
 
 ```
 Lee TODA la carpeta /design_handoff_kds/ antes de escribir código:

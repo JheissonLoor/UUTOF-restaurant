@@ -27,7 +27,7 @@ El mesero es **el puente entre la mesa física y la cocina**. Recuerda las decis
 - El **mesero verifica el efectivo** cuando el cliente eligió pagar en efectivo (pantalla de cambio).
 - Métodos de pago: **tarjeta, yape, efectivo, mixto** (NO SPEI). Moneda: **soles peruanos (S/)**.
 
-## 🚀 Prompt para Claude Code
+## 🚀 Prompt de implementacion
 
 ```
 Lee toda la carpeta /design_handoff_mesero/ antes de empezar.

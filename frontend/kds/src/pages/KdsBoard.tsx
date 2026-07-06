@@ -1,143 +1,155 @@
-import { useCallback, useEffect, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { getTicketsActivos } from '@/api/pedidos'
-import { AlertIcon, CheckIcon, MaximizeIcon } from '@/components/icons'
+import { avanzarEstado, getTicketsActivos, marcarItem, pausarTicket, reportarInsumo } from '@/api/pedidos'
+import { FilterTabs } from '@/components/FilterTabs'
+import { Footer } from '@/components/Footer'
+import { FullscreenButton } from '@/components/FullscreenButton'
 import { Ticket } from '@/components/Ticket'
+import { ViewToggle } from '@/components/ViewToggle'
+import { ReportarInsumoModal } from '@/components/modals/ReportarInsumoModal'
+import { BoardMessage, TicketSkeletonGrid } from '@/components/ui/BoardStates'
+import { useNowTick } from '@/hooks/useNowTick'
+import { filterTickets, playDing, sortTickets, withRuntime, type RuntimeTicket } from '@/lib/tickets'
 import { useWebSocket } from '@/realtime/useWebSocket'
 import { publishTopbarStats } from '@/state/topbarStats'
-import type { KitchenTicket, WSEvent } from '@/types/api'
+import type { FilterId, KitchenTicket, ViewMode, WSEvent } from '@/types/api'
 
-export function KdsBoard(): JSX.Element {
+interface KdsBoardProps {
+  soundEnabled: boolean
+}
+
+export function KdsBoard({ soundEnabled }: KdsBoardProps): JSX.Element {
+  const queryClient = useQueryClient()
+  const nowMs = useNowTick()
+  const [filter, setFilter] = useState<FilterId>('activos')
+  const [view, setView] = useState<ViewMode>('cards')
+  const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set())
+  const [reportTicket, setReportTicket] = useState<RuntimeTicket | null>(null)
+
   const ticketsQuery = useQuery({ queryKey: ['kds', 'tickets'], queryFn: getTicketsActivos, refetchInterval: 20_000 })
 
+  const replaceTicket = useCallback((ticket: KitchenTicket) => {
+    queryClient.setQueryData<KitchenTicket[]>(['kds', 'tickets'], (current = []) => {
+      const exists = current.some((item) => item.id_pedido === ticket.id_pedido)
+      return exists ? current.map((item) => item.id_pedido === ticket.id_pedido ? ticket : item) : [ticket, ...current]
+    })
+  }, [queryClient])
+
+  const markItemMutation = useMutation({
+    mutationFn: ({ idPedido, idDetalle, listo }: { idPedido: number; idDetalle: number; listo: boolean }) => marcarItem(idPedido, idDetalle, listo),
+    onSuccess: (ticket) => {
+      replaceTicket(ticket)
+      if (ticket.estado === 'ready') playDing(soundEnabled)
+    },
+  })
+
+  const advanceMutation = useMutation({
+    mutationFn: ({ idPedido, transicion }: { idPedido: number; transicion: 'marcarListo' | 'entregar' }) => avanzarEstado(idPedido, transicion),
+    onSuccess: (ticket, variables) => {
+      if (variables.transicion === 'entregar') {
+        queryClient.setQueryData<KitchenTicket[]>(['kds', 'tickets'], (current = []) => current.filter((item) => item.id_pedido !== ticket.id_pedido))
+      } else {
+        replaceTicket(ticket)
+        playDing(soundEnabled)
+      }
+    },
+  })
+
+  const pauseMutation = useMutation({
+    mutationFn: ({ idPedido, pausado }: { idPedido: number; pausado: boolean }) => pausarTicket(idPedido, pausado),
+    onSuccess: replaceTicket,
+  })
+
+  const reportMutation = useMutation({
+    mutationFn: ({ idPedido, idDetalle, nota }: { idPedido: number; idDetalle: number; nota: string }) => reportarInsumo(idPedido, idDetalle, nota),
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData<KitchenTicket[]>(['kds', 'tickets'], (current = []) => current.map((ticket) => ticket.id_pedido === variables.idPedido ? { ...ticket, alerta_insumo: true } : ticket))
+      playDing(soundEnabled)
+    },
+  })
+
   const handleRealtimeEvent = useCallback((event: WSEvent) => {
-    if (event.tipo.startsWith('pedido.')) {
-      void ticketsQuery.refetch()
+    if (!event.tipo.startsWith('pedido.') && event.tipo !== 'insumo.alerta') return
+    const idPedido = typeof event.id_pedido === 'number' ? event.id_pedido : undefined
+    if (idPedido !== undefined) {
+      setHighlightedIds((current) => new Set(current).add(idPedido))
+      window.setTimeout(() => {
+        setHighlightedIds((current) => {
+          const next = new Set(current)
+          next.delete(idPedido)
+          return next
+        })
+      }, 1500)
     }
-  }, [ticketsQuery])
+    if (event.tipo === 'pedido.creado') playDing(soundEnabled)
+    void ticketsQuery.refetch()
+  }, [soundEnabled, ticketsQuery])
 
   const socketState = useWebSocket(handleRealtimeEvent)
-  const tickets = useMemo(() => sortTickets(ticketsQuery.data ?? []), [ticketsQuery.data])
-  const counts = useMemo(() => ({
-    active: tickets.length,
-    newTickets: tickets.filter((ticket) => ticket.estado === 'new').length,
-    cooking: tickets.filter((ticket) => ticket.estado === 'cooking').length,
-    urgent: tickets.filter((ticket) => ticket.estado === 'urgent').length,
-    ready: tickets.filter((ticket) => ticket.estado === 'ready').length,
-  }), [tickets])
+  const runtimeTickets = useMemo(() => sortTickets((ticketsQuery.data ?? []).map((ticket) => withRuntime(ticket, nowMs))), [nowMs, ticketsQuery.data])
+  const visibleTickets = useMemo(() => filterTickets(runtimeTickets, filter), [filter, runtimeTickets])
+  const counts = useMemo<Record<FilterId, number>>(() => ({
+    activos: runtimeTickets.length,
+    new: runtimeTickets.filter((ticket) => ticket.estado_visual === 'new').length,
+    cooking: runtimeTickets.filter((ticket) => ticket.estado_visual === 'cooking').length,
+    urgent: runtimeTickets.filter((ticket) => ticket.estado_visual === 'urgent').length,
+    ready: runtimeTickets.filter((ticket) => ticket.estado_visual === 'ready').length,
+  }), [runtimeTickets])
 
   useEffect(() => {
-    publishTopbarStats(tickets)
-  }, [tickets])
+    publishTopbarStats(runtimeTickets)
+  }, [runtimeTickets])
 
-  async function enterFullscreen(): Promise<void> {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen()
-    }
-  }
+  const busyPedidoIds = new Set<number>([
+    markItemMutation.variables?.idPedido,
+    advanceMutation.variables?.idPedido,
+    pauseMutation.variables?.idPedido,
+  ].filter((id): id is number => typeof id === 'number'))
 
   return (
     <>
       <section className="flex items-center gap-2 border-b border-white/[0.08] bg-bg-2 px-[22px] py-3">
-        <FilterPill label="Activos" count={counts.active} active />
-        <FilterPill label="Nuevos" count={counts.newTickets} />
-        <FilterPill label="Cocinando" count={counts.cooking} />
-        <FilterPill label="Urgentes" count={counts.urgent} icon={<AlertIcon size={13} />} />
-        <FilterPill label="Listos" count={counts.ready} icon={<CheckIcon size={13} />} />
+        <FilterTabs active={filter} counts={counts} onChange={setFilter} />
         <div className="flex-1" />
         {socketState !== 'open' ? <span className="rounded-sm border border-danger/50 bg-danger/10 px-3 py-2 text-xs font-semibold text-danger">Reconectando...</span> : null}
-        <div className="flex rounded-sm border border-white/[0.08] bg-surface p-1">
-          <button type="button" className="rounded-[7px] bg-bg px-3 py-1.5 text-xs font-semibold text-ink">Tarjetas</button>
-          <button type="button" className="px-3 py-1.5 text-xs font-semibold text-ink-3" disabled>Lista</button>
-        </div>
-        <button type="button" onClick={() => void enterFullscreen()} className="grid h-9 w-9 place-items-center rounded-sm border border-white/[0.16] text-ink-3 transition hover:text-ink" aria-label="Pantalla completa">
-          <MaximizeIcon size={15} />
-        </button>
+        <ViewToggle value={view} onChange={setView} />
+        <FullscreenButton />
       </section>
 
       <main className="min-h-0 overflow-auto px-[22px] py-4">
         {ticketsQuery.isLoading ? <TicketSkeletonGrid /> : null}
         {ticketsQuery.isError ? <BoardMessage tone="error" title="No se pudieron cargar los tickets" detail="Verifica que el backend y MySQL estén activos." /> : null}
-        {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length === 0 ? <BoardMessage tone="empty" title="Todo tranquilo" detail="Sin tickets pendientes en cocina." /> : null}
-        {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length > 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] content-start gap-3.5">
-            {tickets.map((ticket) => <Ticket key={ticket.id_pedido} ticket={ticket} />)}
+        {!ticketsQuery.isLoading && !ticketsQuery.isError && visibleTickets.length === 0 ? <BoardMessage tone="empty" title="Todo tranquilo" detail="Sin tickets pendientes para este filtro." /> : null}
+        {!ticketsQuery.isLoading && !ticketsQuery.isError && visibleTickets.length > 0 ? (
+          <div className={view === 'cards' ? 'grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] content-start gap-3.5' : 'grid grid-cols-1 content-start gap-2.5'}>
+            {visibleTickets.map((ticket) => (
+              <Ticket
+                key={ticket.id_pedido}
+                ticket={ticket}
+                view={view}
+                highlighted={highlightedIds.has(ticket.id_pedido)}
+                busy={busyPedidoIds.has(ticket.id_pedido)}
+                onToggleItem={(idDetalle, listo) => markItemMutation.mutate({ idPedido: ticket.id_pedido, idDetalle, listo })}
+                onMarkReady={() => advanceMutation.mutate({ idPedido: ticket.id_pedido, transicion: 'marcarListo' })}
+                onDeliver={() => advanceMutation.mutate({ idPedido: ticket.id_pedido, transicion: 'entregar' })}
+                onPause={() => pauseMutation.mutate({ idPedido: ticket.id_pedido, pausado: !ticket.pausado })}
+                onReport={() => setReportTicket(ticket)}
+              />
+            ))}
           </div>
         ) : null}
       </main>
 
-      <footer className="flex items-center gap-4 border-t border-white/[0.08] bg-bg-2 px-[22px] text-[12.5px] text-ink-3">
-        <Legend color="#F5C04A" label="Nuevo" />
-        <Legend color="#F26B53" label="Cocinando" />
-        <Legend color="#FF5C42" label="Urgente" />
-        <Legend color="#5BD4B0" label="Listo" />
-        <div className="flex-1" />
-        <span className="rounded-full border border-white/[0.08] bg-surface px-3 py-1">Tiempo prom: <b className="text-ink tnum">18 min</b></span>
-        <span className="rounded-full border border-white/[0.08] bg-surface px-3 py-1">Modo: <b className="text-ink">Premium</b></span>
-      </footer>
+      <Footer tickets={runtimeTickets} />
+
+      {reportTicket ? (
+        <ReportarInsumoModal
+          ticket={reportTicket}
+          onClose={() => setReportTicket(null)}
+          onSubmit={(idDetalle, nota) => reportMutation.mutateAsync({ idPedido: reportTicket.id_pedido, idDetalle, nota })}
+        />
+      ) : null}
     </>
   )
-}
-
-function FilterPill({ label, count, active = false, icon }: { label: string; count: number; active?: boolean; icon?: JSX.Element }): JSX.Element {
-  return (
-    <button
-      type="button"
-      disabled={!active}
-      className={`inline-flex items-center gap-2 rounded-[11px] border px-4 py-2 text-[13px] font-medium ${active ? 'border-coral bg-coral/10 text-coral' : 'border-white/[0.08] bg-surface text-ink-2'}`}
-    >
-      {icon}
-      {label}
-      <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold tnum ${active ? 'bg-coral text-white' : 'bg-bg text-ink'}`}>{count}</span>
-    </button>
-  )
-}
-
-function TicketSkeletonGrid(): JSX.Element {
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-3.5">
-      {Array.from({ length: 8 }).map((_, index) => (
-        <div key={index} className="min-h-[260px] animate-pulse rounded-[16px] border border-white/[0.08] bg-surface">
-          <div className="h-1.5 rounded-t-[16px] bg-white/[0.08]" />
-          <div className="space-y-4 p-4">
-            <div className="h-7 w-24 rounded-sm bg-white/[0.08]" />
-            <div className="h-4 w-full rounded-sm bg-white/[0.08]" />
-            <div className="h-4 w-2/3 rounded-sm bg-white/[0.08]" />
-            <div className="h-20 rounded-sm bg-white/[0.08]" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function BoardMessage({ tone, title, detail }: { tone: 'empty' | 'error'; title: string; detail: string }): JSX.Element {
-  return (
-    <div className={`grid min-h-full place-items-center rounded-lg border ${tone === 'error' ? 'border-danger/40 bg-danger/10 text-danger' : 'border-white/[0.08] bg-surface text-ink'}`}>
-      <div className="text-center">
-        <div className="font-serif text-[30px] font-semibold">{title}</div>
-        <p className="mt-2 text-sm text-ink-3">{detail}</p>
-      </div>
-    </div>
-  )
-}
-
-function Legend({ color, label }: { color: string; label: string }): JSX.Element {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-      {label}
-    </span>
-  )
-}
-
-function sortTickets(tickets: KitchenTicket[]): KitchenTicket[] {
-  const rank: Record<KitchenTicket['estado'], number> = {
-    urgent: 0,
-    new: 1,
-    cooking: 2,
-    ready: 3,
-  }
-  return [...tickets].sort((a, b) => rank[a.estado] - rank[b.estado] || a.id_pedido - b.id_pedido)
 }

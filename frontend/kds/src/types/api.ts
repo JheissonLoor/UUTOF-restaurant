@@ -1,7 +1,9 @@
 export type UserRole = 'cliente' | 'mesero' | 'cocina' | 'admin'
 export type BackendOrderStatus = 'espera' | 'cocina' | 'listo' | 'entregado' | 'pagado'
 export type TicketStatus = 'new' | 'cooking' | 'urgent' | 'ready'
-export type PedidoTransition = 'empezarPreparacion' | 'marcarTerminado' | 'entregarMesa'
+export type PedidoTransition = 'empezarPreparacion' | 'marcarTerminado' | 'marcarListo' | 'entregarMesa' | 'entregar'
+export type FilterId = 'activos' | 'new' | 'cooking' | 'urgent' | 'ready'
+export type ViewMode = 'cards' | 'list'
 
 export interface UsuarioSesion {
   id_usuario: number
@@ -31,17 +33,30 @@ export interface ProblemDetails {
 }
 
 export interface BackendKitchenItem {
+  id_detalle?: number | null
   qty: number
   nombre: string
   nota?: string | null
+  modificadores?: string[]
+  alergenos?: string[]
+  estado_item?: 'en_cocina' | 'ready' | 'delivered'
+  listo?: boolean
 }
 
 export interface BackendKitchenOrder {
   id_pedido: number
+  num?: number | null
+  id_mesa?: number | null
   cliente: string
   mesa: number
+  origen?: 'app_cliente' | 'mesero'
+  mesero?: string
   estado: BackendOrderStatus
+  creado_en?: string | null
   minutos: number
+  elapsed_seg?: number
+  target_seg?: number
+  pausado?: boolean
   total: number
   items: BackendKitchenItem[]
 }
@@ -66,13 +81,16 @@ export interface KitchenTicket {
   estado: TicketStatus
   estado_backend: BackendOrderStatus
   creado_en: string
+  elapsed_seg: number
   target_seg: number
+  pausado: boolean
+  alerta_insumo: boolean
   total: number
   items: TicketItem[]
 }
 
 export type WSEvent =
-  | { tipo: 'pedido.creado'; pedido?: KitchenTicket }
+  | { tipo: 'pedido.creado'; id_pedido?: number; id_mesa?: number; pedido?: KitchenTicket }
   | { tipo: 'pedido.items_agregados'; id_pedido: number; id_mesa?: number; items?: TicketItem[] }
   | { tipo: 'pedido.cancelado'; id_pedido: number }
   | { tipo: 'pedido.listo'; id_pedido: number }

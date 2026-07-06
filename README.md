@@ -117,13 +117,22 @@ Frontend Cocina Basico:
 
 Frontend KDS Premium:
 
-- Fase A implementada con tema oscuro de alto contraste.
+- Tema oscuro de alto contraste para monitor de cocina o tablet horizontal.
 - Login para rol cocina o admin.
 - Topbar con marca, reloj, cocinero activo y metricas.
 - Board conectado al backend real con tickets activos.
+- Vista en tarjetas y vista en lista.
+- Filtros por activos, nuevos, en cocina, urgentes y listos.
 - Cronometro visual por ticket con limite legible `99:59+` para pedidos antiguos.
-- WebSocket con reconexion automatica y refetch ante eventos de pedido.
-- Estados de carga, error y vacio.
+- Urgencia visual automatica por tiempo de preparacion.
+- Marcado individual de platillos dentro de cada ticket.
+- Avance de ticket completo a listo y entregado.
+- Pausa y reanudacion de tickets.
+- Reporte de falta de insumo desde el ticket.
+- Sonido opcional de aviso ante eventos nuevos.
+- Modo pantalla completa.
+- WebSocket con reconexion automatica, resaltado de tickets y refetch ante eventos de pedido.
+- Estados de carga, error, vacio y confirmaciones visuales.
 
 Frontend Cliente:
 
@@ -139,11 +148,10 @@ Frontend Cliente:
 
 ## Pendiente
 
-- KDS Premium Fases B-E: marcado individual real por item, filtros completos, sonido, reportar insumo, pausar tickets y fullscreen refinado.
 - Division avanzada de cuenta.
 - Cambio de mesa.
 - QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
-- Realtime mas profundo por cada cambio de item y cuenta.
+- Realtime mas profundo para cuenta y pagos.
 - Pruebas automatizadas mas amplias.
 - Despliegue.
 
@@ -168,6 +176,7 @@ Crear base de datos:
 Get-Content .\database\init_db.sql | mysql -u root -p
 Get-Content .\app\db\migrations.sql | mysql -u uttof_user -p uttof_db
 Get-Content .\app\db\003_mesero_app.sql | mysql -u uttof_user -p uttof_db
+Get-Content .\app\db\004_kds_premium.sql | mysql -u uttof_user -p uttof_db
 python -m app.db.seed
 ```
 
@@ -175,6 +184,9 @@ Si usas XAMPP y `mysql` no esta en PATH:
 
 ```powershell
 Get-Content .\database\init_db.sql | C:\xampp\mysql\bin\mysql.exe -u root -p
+Get-Content .\app\db\migrations.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\003_mesero_app.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\004_kds_premium.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 ```
 
 ## Levantar Backend

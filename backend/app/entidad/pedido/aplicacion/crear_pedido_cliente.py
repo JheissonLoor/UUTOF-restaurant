@@ -22,6 +22,7 @@ async def crear_pedido_cliente(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Debes hacer check-in antes de pedir")
 
     pedido_base = await repo.obtener_pedido_abierto_por_mesa(session, data.id_mesa)
+    pedido_es_nuevo = pedido_base is None
     id_pedido = int(pedido_base["id_pedido"]) if pedido_base else await repo.crear_pedido_base_cliente(
         session,
         int(actor["sub"]),
@@ -35,7 +36,7 @@ async def crear_pedido_cliente(
     )
     await manager.broadcast(
         {
-            "tipo": "pedido.items_agregados",
+            "tipo": "pedido.creado" if pedido_es_nuevo else "pedido.items_agregados",
             "id_pedido": int(pedido["id_pedido"]),
             "id_mesa": int(pedido["id_mesa"]),
         }

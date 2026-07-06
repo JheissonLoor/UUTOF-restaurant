@@ -23,23 +23,27 @@ export function mapOrderToTicket(order: BackendKitchenOrder): KitchenTicket {
 
   return {
     id_pedido: order.id_pedido,
-    num: order.id_pedido,
+    num: order.num ?? order.id_pedido,
     mesa: `Mesa ${order.mesa}`,
-    origen: detectOrigen(order.cliente),
-    mesero: order.cliente,
+    origen: order.origen ?? detectOrigen(order.cliente),
+    mesero: order.mesero ?? order.cliente,
     estado,
     estado_backend: order.estado,
-    creado_en: createdAt.toISOString(),
-    target_seg: DEFAULT_TARGET_SECONDS,
+    creado_en: order.creado_en ?? createdAt.toISOString(),
+    elapsed_seg: order.elapsed_seg ?? minutes * 60,
+    target_seg: order.target_seg ?? DEFAULT_TARGET_SECONDS,
+    pausado: Boolean(order.pausado),
+    alerta_insumo: false,
     total: Number(order.total),
     items: order.items.map((item, index) => ({
-      id: `${order.id_pedido}-${index}`,
+      id: `${order.id_pedido}-${item.id_detalle ?? index}`,
+      id_detalle: item.id_detalle ?? undefined,
       qty: item.qty,
       nombre: item.nombre,
-      modificadores: [],
+      modificadores: item.modificadores ?? [],
       nota: item.nota ?? null,
-      alergenos: [],
-      done: order.estado === 'listo',
+      alergenos: item.alergenos ?? [],
+      done: Boolean(item.listo) || item.estado_item === 'ready' || item.estado_item === 'delivered' || order.estado === 'listo',
     })),
   }
 }
@@ -51,8 +55,9 @@ export async function getTicketsActivos(): Promise<KitchenTicket[]> {
   return response.data.map(mapOrderToTicket)
 }
 
-export async function marcarItem(idPedido: number, idDetalle: number, listo: boolean): Promise<void> {
-  await apiClient.patch(`/pedidos/${idPedido}/items/${idDetalle}`, { listo })
+export async function marcarItem(idPedido: number, idDetalle: number, listo: boolean): Promise<KitchenTicket> {
+  const response = await apiClient.patch<BackendKitchenOrder>(`/pedidos/${idPedido}/items/${idDetalle}`, { listo })
+  return mapOrderToTicket(response.data)
 }
 
 export async function avanzarEstado(idPedido: number, transicion: PedidoTransition): Promise<KitchenTicket> {
@@ -60,4 +65,13 @@ export async function avanzarEstado(idPedido: number, transicion: PedidoTransiti
     transicion,
   })
   return mapOrderToTicket(response.data)
+}
+
+export async function pausarTicket(idPedido: number, pausado: boolean): Promise<KitchenTicket> {
+  const response = await apiClient.patch<BackendKitchenOrder>(`/pedidos/${idPedido}/pausar`, { pausado })
+  return mapOrderToTicket(response.data)
+}
+
+export async function reportarInsumo(idPedido: number, idDetalle: number, nota: string): Promise<void> {
+  await apiClient.post(`/pedidos/${idPedido}/reportar-insumo`, { id_detalle: idDetalle, nota })
 }

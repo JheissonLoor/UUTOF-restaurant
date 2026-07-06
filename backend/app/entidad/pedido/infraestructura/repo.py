@@ -18,7 +18,9 @@ DB_TO_COCINA_ESTADO = {value: key for key, value in COCINA_TO_DB_ESTADO.items()}
 COCINA_TRANSICIONES = {
     "empezarPreparacion": ("creado", "en_cocina"),
     "marcarTerminado": ("en_cocina", "listo"),
+    "marcarListo": ("en_cocina", "listo"),
     "entregarMesa": ("listo", "entregado"),
+    "entregar": ("listo", "entregado"),
 }
 
 
@@ -39,14 +41,22 @@ async def listar_pedidos_cocina(
             f"""
             SELECT
               p.id_pedido,
+              p.id_pedido AS num,
+              p.id_mesa,
               COALESCE(NULLIF(u.nombre, ''), CONCAT('Cliente mesa ', m.numero)) AS cliente,
               m.numero AS mesa,
+              CASE WHEN u.rol = 'cliente' THEN 'app_cliente' ELSE 'mesero' END AS origen,
+              COALESCE(NULLIF(mesero.nombre, ''), 'Cocina UTTOF') AS mesero,
               p.estado AS db_estado,
-              GREATEST(TIMESTAMPDIFF(MINUTE, p.creado_en, NOW()), 0) AS minutos,
+              DATE_FORMAT(p.creado_en, '%Y-%m-%dT%H:%i:%s') AS creado_en,
+              GREATEST(TIMESTAMPDIFF(MINUTE, p.creado_en, COALESCE(p.pausado_en, NOW())), 0) AS minutos,
+              GREATEST(TIMESTAMPDIFF(SECOND, p.creado_en, COALESCE(p.pausado_en, NOW())), 0) AS elapsed_seg,
+              COALESCE(p.pausado, FALSE) AS pausado,
               p.total
             FROM pedido p
             INNER JOIN mesa m ON m.id_mesa = p.id_mesa
             LEFT JOIN usuario u ON u.id_usuario = p.id_usuario
+            LEFT JOIN usuario mesero ON mesero.id_usuario = m.id_mesero
             WHERE p.estado IN :estados
               {id_filter}
             ORDER BY FIELD(p.estado, 'creado', 'en_cocina', 'listo', 'entregado', 'pagado'),
@@ -69,10 +79,18 @@ async def listar_pedidos_cocina(
         pedidos.append(
             {
                 "id_pedido": id_actual,
+                "num": id_actual,
+                "id_mesa": int(data["id_mesa"]),
                 "cliente": str(data["cliente"]),
                 "mesa": int(data["mesa"]),
+                "origen": str(data["origen"]),
+                "mesero": str(data["mesero"]),
                 "estado": DB_TO_COCINA_ESTADO[str(data["db_estado"])],
+                "creado_en": str(data["creado_en"]),
                 "minutos": int(data["minutos"] or 0),
+                "elapsed_seg": int(data["elapsed_seg"] or 0),
+                "target_seg": 18 * 60,
+                "pausado": bool(data["pausado"]),
                 "total": float(data["total"] or 0),
                 "items": [],
             }
@@ -83,9 +101,11 @@ async def listar_pedidos_cocina(
             """
             SELECT
               dp.id_pedido,
+              dp.id_detalle,
               dp.cantidad AS qty,
               pl.nombre,
-              dp.notas AS nota
+              dp.notas AS nota,
+              dp.estado_item
             FROM detalle_pedido dp
             INNER JOIN platillo pl ON pl.id_platillo = dp.id_platillo
             WHERE dp.id_pedido IN :pedido_ids
@@ -100,9 +120,14 @@ async def listar_pedidos_cocina(
         data = dict(row._mapping)
         items_by_pedido[int(data["id_pedido"])].append(
             {
+                "id_detalle": int(data["id_detalle"]),
                 "qty": int(data["qty"]),
                 "nombre": str(data["nombre"]),
                 "nota": data["nota"],
+                "modificadores": [],
+                "alergenos": [],
+                "estado_item": str(data["estado_item"]),
+                "listo": str(data["estado_item"]) in {"ready", "delivered"},
             }
         )
 
@@ -207,6 +232,178 @@ async def cambiar_estado_pedido_cocina(
             {"id_pedido": id_pedido},
         )
 
+    await session.commit()
+    pedidos = await listar_pedidos_cocina(session, list(COCINA_TO_DB_ESTADO.keys()), id_pedido)
+    return pedidos[0] if pedidos else None
+
+
+async def marcar_item_cocina(
+    session: AsyncSession,
+    id_pedido: int,
+    id_detalle: int,
+    listo: bool,
+) -> dict[str, Any] | None:
+    item_result = await session.execute(
+        text(
+            """
+            SELECT dp.estado_item, p.estado
+            FROM detalle_pedido dp
+            INNER JOIN pedido p ON p.id_pedido = dp.id_pedido
+            WHERE dp.id_pedido = :id_pedido
+              AND dp.id_detalle = :id_detalle
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido, "id_detalle": id_detalle},
+    )
+    row = item_result.first()
+    if row is None:
+        return None
+
+    data = dict(row._mapping)
+    if str(data["estado_item"]) == "delivered":
+        raise ValueError("El item ya fue entregado y no puede volver a cocina")
+    if str(data["estado"]) in {"pagado", "cancelado"}:
+        raise ValueError("El pedido ya no acepta cambios de cocina")
+
+    next_item_status = "ready" if listo else "en_cocina"
+    await session.execute(
+        text(
+            """
+            UPDATE detalle_pedido
+            SET estado_item = :estado_item
+            WHERE id_pedido = :id_pedido
+              AND id_detalle = :id_detalle
+            """
+        ),
+        {"estado_item": next_item_status, "id_pedido": id_pedido, "id_detalle": id_detalle},
+    )
+
+    counts_result = await session.execute(
+        text(
+            """
+            SELECT
+              COUNT(*) AS total_items,
+              SUM(CASE WHEN estado_item IN ('ready', 'delivered') THEN 1 ELSE 0 END) AS listos
+            FROM detalle_pedido
+            WHERE id_pedido = :id_pedido
+            """
+        ),
+        {"id_pedido": id_pedido},
+    )
+    counts = dict(counts_result.one()._mapping)
+    total_items = int(counts["total_items"] or 0)
+    ready_items = int(counts["listos"] or 0)
+
+    if total_items > 0 and ready_items == total_items:
+        await session.execute(
+            text("UPDATE pedido SET estado = 'listo' WHERE id_pedido = :id_pedido"),
+            {"id_pedido": id_pedido},
+        )
+        await session.execute(
+            text(
+                """
+                UPDATE mesa m
+                INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+                SET m.estado = 'lista'
+                WHERE p.id_pedido = :id_pedido
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+    else:
+        await session.execute(
+            text(
+                """
+                UPDATE pedido
+                SET estado = 'en_cocina'
+                WHERE id_pedido = :id_pedido
+                  AND estado IN ('creado', 'en_cocina', 'listo')
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+        await session.execute(
+            text(
+                """
+                UPDATE mesa m
+                INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+                SET m.estado = 'ocupada'
+                WHERE p.id_pedido = :id_pedido
+                """
+            ),
+            {"id_pedido": id_pedido},
+        )
+
+    await session.commit()
+    pedidos = await listar_pedidos_cocina(session, list(COCINA_TO_DB_ESTADO.keys()), id_pedido)
+    return pedidos[0] if pedidos else None
+
+
+async def pausar_pedido_cocina(session: AsyncSession, id_pedido: int, pausado: bool) -> dict[str, Any] | None:
+    current_result = await session.execute(
+        text("SELECT estado FROM pedido WHERE id_pedido = :id_pedido LIMIT 1"),
+        {"id_pedido": id_pedido},
+    )
+    current_status = current_result.scalar_one_or_none()
+    if current_status is None:
+        return None
+    if str(current_status) in {"pagado", "cancelado"}:
+        raise ValueError("El pedido ya no puede pausarse")
+
+    await session.execute(
+        text(
+            """
+            UPDATE pedido
+            SET pausado = :pausado,
+                pausado_en = CASE WHEN :pausado THEN COALESCE(pausado_en, NOW()) ELSE NULL END
+            WHERE id_pedido = :id_pedido
+            """
+        ),
+        {"id_pedido": id_pedido, "pausado": pausado},
+    )
+    await session.commit()
+    pedidos = await listar_pedidos_cocina(session, list(COCINA_TO_DB_ESTADO.keys()), id_pedido)
+    return pedidos[0] if pedidos else None
+
+
+async def reportar_insumo(
+    session: AsyncSession,
+    *,
+    id_pedido: int,
+    id_detalle: int,
+    id_usuario: int,
+    nota: str,
+) -> dict[str, Any] | None:
+    exists_result = await session.execute(
+        text(
+            """
+            SELECT 1
+            FROM detalle_pedido
+            WHERE id_pedido = :id_pedido
+              AND id_detalle = :id_detalle
+            LIMIT 1
+            """
+        ),
+        {"id_pedido": id_pedido, "id_detalle": id_detalle},
+    )
+    if exists_result.first() is None:
+        return None
+
+    await session.execute(
+        text(
+            """
+            INSERT INTO pedido_insumo_alerta (id_pedido, id_detalle, id_usuario, nota)
+            VALUES (:id_pedido, :id_detalle, :id_usuario, :nota)
+            """
+        ),
+        {
+            "id_pedido": id_pedido,
+            "id_detalle": id_detalle,
+            "id_usuario": id_usuario,
+            "nota": nota,
+        },
+    )
     await session.commit()
     pedidos = await listar_pedidos_cocina(session, list(COCINA_TO_DB_ESTADO.keys()), id_pedido)
     return pedidos[0] if pedidos else None

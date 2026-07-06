@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 
-export function useElapsedTimer(createdAt: string, paused = false): number {
-  const [elapsed, setElapsed] = useState(() => secondsSince(createdAt))
+export function useElapsedTimer(createdAt: string, paused = false, initialElapsed = 0): number {
+  const [elapsed, setElapsed] = useState(() => (paused ? initialElapsed : Math.max(initialElapsed, secondsSince(createdAt))))
 
   useEffect(() => {
-    if (paused) return undefined
-    const tick = () => setElapsed(secondsSince(createdAt))
+    if (paused) {
+      setElapsed(initialElapsed)
+      return undefined
+    }
+    const tick = () => setElapsed(Math.max(initialElapsed, secondsSince(createdAt)))
     tick()
     const id = window.setInterval(tick, 1_000)
     return () => window.clearInterval(id)
-  }, [createdAt, paused])
+  }, [createdAt, initialElapsed, paused])
 
   return elapsed
 }

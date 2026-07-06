@@ -54,24 +54,50 @@ class CuentaResponse(BaseModel):
 
 
 EstadoPedidoCocina = Literal["espera", "cocina", "listo", "entregado", "pagado"]
-TransicionPedidoCocina = Literal["empezarPreparacion", "marcarTerminado", "entregarMesa"]
+TransicionPedidoCocina = Literal["empezarPreparacion", "marcarTerminado", "marcarListo", "entregarMesa", "entregar"]
 
 
 class PedidoCocinaItem(BaseModel):
+    id_detalle: int | None = None
     qty: int
     nombre: str
     nota: str | None = None
+    modificadores: list[str] = Field(default_factory=list)
+    alergenos: list[str] = Field(default_factory=list)
+    estado_item: Literal["en_cocina", "ready", "delivered"] = "en_cocina"
+    listo: bool = False
 
 
 class PedidoCocinaResponse(BaseModel):
     id_pedido: int
+    num: int | None = None
+    id_mesa: int | None = None
     cliente: str
     mesa: int
+    origen: Literal["app_cliente", "mesero"] = "mesero"
+    mesero: str = "Cocina"
     estado: EstadoPedidoCocina
+    creado_en: str | None = None
     minutos: int
+    elapsed_seg: int = 0
+    target_seg: int = 1080
+    pausado: bool = False
     total: float
     items: list[PedidoCocinaItem]
 
 
 class PedidoEstadoUpdateRequest(BaseModel):
     transicion: TransicionPedidoCocina
+
+
+class PedidoItemEstadoUpdateRequest(BaseModel):
+    listo: bool
+
+
+class PedidoPausaRequest(BaseModel):
+    pausado: bool
+
+
+class PedidoInsumoReportRequest(BaseModel):
+    id_detalle: int = Field(gt=0)
+    nota: str = Field(min_length=3, max_length=500)

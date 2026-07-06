@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 
-import { BellIcon, CheckIcon, FlameIcon, LogOutIcon } from '@/components/icons'
+import { BellIcon, BellOffIcon, CheckIcon, FlameIcon, LogOutIcon } from '@/components/icons'
 import { useGlobalStats } from '@/state/topbarStats'
 import type { UsuarioSesion } from '@/types/api'
 
 interface TopbarProps {
   user: UsuarioSesion | null
+  soundEnabled: boolean
+  onToggleSound: () => void
   onLogout: () => void
 }
 
-export function Topbar({ user, onLogout }: TopbarProps): JSX.Element {
+export function Topbar({ user, soundEnabled, onToggleSound, onLogout }: TopbarProps): JSX.Element {
   const [now, setNow] = useState(() => new Date())
   const stats = useGlobalStats()
 
@@ -51,6 +53,14 @@ export function Topbar({ user, onLogout }: TopbarProps): JSX.Element {
           </div>
           {user?.nombre ?? 'Chef'}
         </div>
+        <button
+          type="button"
+          className={`grid h-9 w-9 place-items-center rounded-sm border transition ${soundEnabled ? 'border-sun/40 bg-sun/10 text-sun' : 'border-white/[0.08] bg-surface text-ink-3 hover:border-white/[0.16] hover:text-ink'}`}
+          onClick={onToggleSound}
+          aria-label={soundEnabled ? 'Silenciar sonido' : 'Activar sonido'}
+        >
+          {soundEnabled ? <BellIcon size={15} /> : <BellOffIcon size={15} />}
+        </button>
         <button
           type="button"
           className="grid h-9 w-9 place-items-center rounded-sm border border-white/[0.08] bg-surface text-ink-3 transition hover:border-white/[0.16] hover:text-ink"

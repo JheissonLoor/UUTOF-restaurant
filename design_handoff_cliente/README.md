@@ -27,7 +27,7 @@ El cliente es **el comensal**. Recuerda las decisiones de negocio ya tomadas:
 - **Tracking en vivo**: tras enviar el pedido, ve las etapas (recibido → preparando → listo → servido) por WebSocket.
 - Métodos de pago: **tarjeta, Yape/QR, efectivo, mixto** (NO SPEI). Moneda: **soles (S/)**.
 
-## 🚀 Prompt para Codex
+## 🚀 Prompt de implementacion
 
 ```
 Vamos a construir la App del Cliente (comensal) de UTTOF — la app más

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { KitchenTicket } from '@/types/api'
+import type { KitchenTicket, TicketStatus } from '@/types/api'
 
 const emptyStats = {
   cooking: 0,
@@ -8,12 +8,14 @@ const emptyStats = {
   ready: 0,
 }
 
-export function publishTopbarStats(tickets: KitchenTicket[]): void {
+type TicketForStats = KitchenTicket & { estado_visual?: TicketStatus }
+
+export function publishTopbarStats(tickets: TicketForStats[]): void {
   window.dispatchEvent(new CustomEvent('kds:stats', {
     detail: {
-      cooking: tickets.filter((ticket) => ticket.estado === 'cooking' || ticket.estado === 'urgent').length,
-      newTickets: tickets.filter((ticket) => ticket.estado === 'new').length,
-      ready: tickets.filter((ticket) => ticket.estado === 'ready').length,
+      cooking: tickets.filter((ticket) => (ticket.estado_visual ?? ticket.estado) === 'cooking' || (ticket.estado_visual ?? ticket.estado) === 'urgent').length,
+      newTickets: tickets.filter((ticket) => (ticket.estado_visual ?? ticket.estado) === 'new').length,
+      ready: tickets.filter((ticket) => (ticket.estado_visual ?? ticket.estado) === 'ready').length,
     },
   }))
 }
