@@ -42,6 +42,7 @@ backend/
 frontend/
   admin/
   cliente/
+  kds/
   mesero/
   cocina-basico/
 
@@ -50,6 +51,7 @@ docs/
 
 design_handoff_cocina_basico/
 design_handoff_cliente/
+design_handoff_kds/
 design_handoff_mesero/
 design_handoff_panel_admin/
 ```
@@ -62,7 +64,7 @@ Actualmente el sistema maneja 4 roles:
 | --- | --- |
 | `admin` | Gestiona dashboard, menu, mesas, reservas, usuarios, reportes y configuracion. |
 | `mesero` | Gestiona mesas asignadas, pedidos, platos listos y cobros. |
-| `cocina` | Rol preparado para KDS/cocina. |
+| `cocina` | Usa el panel cocina basico y el KDS Premium para seguimiento de pedidos. |
 | `cliente` | Realiza check-in QR, consulta carta, envia pedidos, sigue estados, paga postpago, reserva y registra resenas. |
 
 ## Funcionalidades Implementadas
@@ -113,6 +115,16 @@ Frontend Cocina Basico:
 - Filtros por estado con contador.
 - Estados de carga, error, vacio y toast de confirmacion.
 
+Frontend KDS Premium:
+
+- Fase A implementada con tema oscuro de alto contraste.
+- Login para rol cocina o admin.
+- Topbar con marca, reloj, cocinero activo y metricas.
+- Board conectado al backend real con tickets activos.
+- Cronometro visual por ticket con limite legible `99:59+` para pedidos antiguos.
+- WebSocket con reconexion automatica y refetch ante eventos de pedido.
+- Estados de carga, error y vacio.
+
 Frontend Cliente:
 
 - Entrada walk-in con simulacion de escaneo QR y confirmacion de mesa.
@@ -127,7 +139,7 @@ Frontend Cliente:
 
 ## Pendiente
 
-- App Cocina/KDS Premium.
+- KDS Premium Fases B-E: marcado individual real por item, filtros completos, sonido, reportar insumo, pausar tickets y fullscreen refinado.
 - Division avanzada de cuenta.
 - Cambio de mesa.
 - QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
@@ -237,6 +249,20 @@ URL:
 http://127.0.0.1:5176
 ```
 
+## Levantar KDS Premium
+
+```powershell
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\kds"
+npm.cmd install
+npm.cmd run dev
+```
+
+URL:
+
+```text
+http://127.0.0.1:5177
+```
+
 ## Credenciales Demo
 
 ```text
@@ -273,6 +299,10 @@ cd frontend/cocina-basico
 npm.cmd run build
 
 cd frontend/cliente
+npm.cmd run lint
+npm.cmd run build
+
+cd frontend/kds
 npm.cmd run lint
 npm.cmd run build
 ```
