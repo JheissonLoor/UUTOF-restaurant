@@ -98,3 +98,124 @@ async def registrar_pago(
         )
     await session.commit()
     return id_transaccion
+
+
+async def listar_pagos_efectivo_pendientes(
+    session: AsyncSession,
+    *,
+    id_mesero: int | None,
+) -> list[dict[str, Any]]:
+    result = await session.execute(
+        text(
+            """
+            SELECT
+              pg.id_transaccion,
+              pg.id_pedido,
+              p.id_mesa,
+              m.numero AS numero_mesa,
+              COALESCE(NULLIF(u.nombre, ''), CONCAT('Cliente mesa ', m.numero)) AS cliente,
+              pg.monto,
+              pg.propina,
+              pg.monto + pg.propina AS total,
+              pg.fecha
+            FROM pago pg
+            INNER JOIN pedido p ON p.id_pedido = pg.id_pedido
+            INNER JOIN mesa m ON m.id_mesa = p.id_mesa
+            LEFT JOIN usuario u ON u.id_usuario = p.id_usuario
+            WHERE pg.metodo = 'efectivo'
+              AND pg.estado = 'pendiente'
+              AND (:id_mesero IS NULL OR m.id_mesero = :id_mesero)
+            ORDER BY pg.fecha, pg.id_transaccion
+            """
+        ),
+        {"id_mesero": id_mesero},
+    )
+    return [dict(row._mapping) for row in result.all()]
+
+
+async def obtener_pago_para_verificar(
+    session: AsyncSession,
+    id_transaccion: int,
+) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT
+              pg.id_transaccion,
+              pg.id_pedido,
+              pg.metodo,
+              pg.estado,
+              pg.monto,
+              pg.propina,
+              p.id_mesa,
+              m.numero AS numero_mesa,
+              m.id_mesero
+            FROM pago pg
+            INNER JOIN pedido p ON p.id_pedido = pg.id_pedido
+            INNER JOIN mesa m ON m.id_mesa = p.id_mesa
+            WHERE pg.id_transaccion = :id_transaccion
+            LIMIT 1
+            FOR UPDATE
+            """
+        ),
+        {"id_transaccion": id_transaccion},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
+async def verificar_pago_efectivo(
+    session: AsyncSession,
+    *,
+    id_transaccion: int,
+    recibido: Decimal,
+    verificado_por: int,
+) -> bool:
+    result = await session.execute(
+        text(
+            """
+            UPDATE pago
+            SET estado = 'verificado',
+                recibido = :recibido,
+                verificado_por = :verificado_por,
+                verificado_en = CURRENT_TIMESTAMP
+            WHERE id_transaccion = :id_transaccion
+              AND metodo = 'efectivo'
+              AND estado = 'pendiente'
+            """
+        ),
+        {
+            "id_transaccion": id_transaccion,
+            "recibido": recibido,
+            "verificado_por": verificado_por,
+        },
+    )
+    if result.rowcount != 1:
+        await session.rollback()
+        return False
+
+    await session.execute(
+        text(
+            """
+            UPDATE pedido p
+            INNER JOIN pago pg ON pg.id_pedido = p.id_pedido
+            SET p.estado = 'pagado'
+            WHERE pg.id_transaccion = :id_transaccion
+            """
+        ),
+        {"id_transaccion": id_transaccion},
+    )
+    await session.execute(
+        text(
+            """
+            UPDATE mesa m
+            INNER JOIN pedido p ON p.id_mesa = m.id_mesa
+            INNER JOIN pago pg ON pg.id_pedido = p.id_pedido
+            SET m.estado = 'libre'
+            WHERE pg.id_transaccion = :id_transaccion
+            """
+        ),
+        {"id_transaccion": id_transaccion},
+    )
+    await session.commit()
+    return True

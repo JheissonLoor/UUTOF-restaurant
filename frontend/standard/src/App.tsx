@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/auth/useAuth';
@@ -11,12 +11,13 @@ import MenuPage from '@/pages/MenuPage';
 import MesaPage from '@/pages/MesaPage';
 import ReservaPage from '@/pages/ReservaPage';
 import OrdersPage from '@/pages/OrdersPage';
-import CocinaPage from '@/pages/CocinaPage';
-import MeseroPage from '@/pages/MeseroPage';
-import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
 import { homeForRole } from '@/lib/roles';
 import type { UserRole } from '@/types';
+
+const CocinaPage = lazy(() => import('@/pages/CocinaPage'));
+const MeseroPage = lazy(() => import('@/pages/MeseroPage'));
+const AdminPage = lazy(() => import('@/pages/AdminPage'));
 
 function ProtectedRoute({ children, role }: { children: ReactNode; role?: UserRole }) {
   const { isAuthenticated, user } = useAuth();
@@ -36,7 +37,8 @@ export function App() {
     <>
       <Toaster position="top-center" richColors />
       <Navbar />
-      <Routes>
+      <Suspense fallback={<div className="container mx-auto px-4 py-8"><div className="h-64 rounded-3xl bg-muted animate-pulse" /></div>}>
+        <Routes>
         <Route
           path="/"
           element={
@@ -127,7 +129,8 @@ export function App() {
         />
 
         <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </>
   );
 }

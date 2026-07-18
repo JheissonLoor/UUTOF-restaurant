@@ -121,7 +121,7 @@ export interface CuentaResponse {
 }
 
 // ===== Pagos =====
-export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo' | 'mixto';
+export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo';
 
 export interface PagoResponse {
   id_transaccion: number;
@@ -130,9 +130,16 @@ export interface PagoResponse {
   recibo: Record<string, unknown>;
 }
 
-export interface PagoParte {
-  metodo: 'tarjeta' | 'yape';
+export interface PagoPendiente {
+  id_transaccion: number;
+  id_pedido: number;
+  id_mesa: number;
+  numero_mesa: number;
+  cliente: string;
   monto: number;
+  propina: number;
+  total: number;
+  fecha: string;
 }
 
 // ===== Reservas =====
@@ -218,6 +225,33 @@ export interface DashboardResponse {
   alertas: AlertaDashboard[];
   pagos_por_tipo: PagoPorTipo[];
   heatmap_pedidos: number[][];
+}
+
+export interface MontoPorPeriodo {
+  periodo: string;
+  monto: number;
+}
+
+export interface CantidadPorPeriodo {
+  periodo: string;
+  cantidad: number;
+}
+
+export interface TopPlatilloVentas {
+  id_platillo: number;
+  nombre: string;
+  cantidad: number;
+  ingresos: number;
+}
+
+export interface ReporteVentasResponse {
+  ingresos_total: number;
+  pedidos_total: number;
+  ticket_promedio: number;
+  ingresos_por_periodo: MontoPorPeriodo[];
+  pedidos_por_periodo: CantidadPorPeriodo[];
+  ticket_promedio_por_periodo: MontoPorPeriodo[];
+  top_platillos: TopPlatilloVentas[];
 }
 
 // ===== Admin CRUD =====
@@ -338,14 +372,3 @@ export interface KitchenOrder {
   total: number;
   items: KitchenOrderItem[];
 }
-
-// ===== Eventos WebSocket =====
-export type WSEvent =
-  | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }
-  | { tipo: 'pedido.listo'; id_pedido: number }
-  | { tipo: 'pedido.entregado'; id_pedido: number }
-  | { tipo: 'pedido.pagado_app'; id_pedido: number; id_mesa?: number }
-  | { tipo: 'pago.efectivo_pendiente'; id_pedido: number; id_mesa: number }
-  | { tipo: 'pago.verificado'; id_pedido: number; id_mesa?: number }
-  | { tipo: 'pedido.items_agregados'; id_pedido: number; id_mesa: number }
-  | { tipo: 'pong' };

@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UtensilsCrossed, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { UtensilsCrossed, Mail, Lock, Eye, EyeOff, ArrowRight, User, ClipboardCheck, ChefHat, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 import { useAuth } from '@/auth/useAuth';
 
 const demoAccounts = [
-  { email: 'cliente@uttof.pe', password: 'cliente123', label: 'Cliente', emoji: '👤' },
-  { email: 'mesero@uttof.pe', password: 'mesero123', label: 'Mesero', emoji: '🧑‍💼' },
-  { email: 'cocina@uttof.pe', password: 'cocina123', label: 'Cocina', emoji: '👨‍🍳' },
-  { email: 'admin@uttof.pe', password: 'admin123', label: 'Admin', emoji: '🛠️' },
+  { email: 'cliente@uttof.pe', password: 'cliente123', label: 'Cliente', icon: User },
+  { email: 'mesero@uttof.pe', password: 'mesero123', label: 'Verificador', icon: ClipboardCheck },
+  { email: 'cocina@uttof.pe', password: 'cocina123', label: 'Cocina', icon: ChefHat },
+  { email: 'admin@uttof.pe', password: 'admin123', label: 'Admin', icon: ShieldCheck },
 ];
 
 export default function LoginPage() {
@@ -65,7 +65,9 @@ export default function LoginPage() {
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-11 pr-4 py-3 rounded-2xl border bg-background text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition"
@@ -80,7 +82,9 @@ export default function LoginPage() {
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
+                name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-11 pr-12 py-3 rounded-2xl border bg-background text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition"
@@ -88,6 +92,7 @@ export default function LoginPage() {
               />
               <button
                 type="button"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition"
               >
@@ -135,7 +140,7 @@ export default function LoginPage() {
                   }}
                   className="py-2.5 rounded-xl bg-background border text-xs font-medium hover:bg-muted hover:border-primary/30 transition-all text-center"
                 >
-                  <span className="block text-lg mb-0.5">{acc.emoji}</span>
+                  <acc.icon className="mx-auto mb-1 h-5 w-5 text-primary" />
                   {acc.label}
                 </button>
               ))}

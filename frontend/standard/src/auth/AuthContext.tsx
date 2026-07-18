@@ -16,12 +16,7 @@ function extractError(error: unknown, fallback: string): string {
 }
 
 function getInitialUser(): UsuarioSesion | null {
-  const session = getSession();
-  if (session?.usuario.rol === 'cliente' || session?.usuario.rol === 'admin') {
-    return session.usuario;
-  }
-  if (session) clearSession();
-  return null;
+  return getSession()?.usuario ?? null;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,15 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     try {
       const session = await loginRequest({ email, password });
-      if (session.usuario.rol !== 'cliente' && session.usuario.rol !== 'admin') {
-        clearSession();
-        return {
-          success: false,
-          error: session.usuario.rol === 'mesero'
-            ? 'Usa la App del Mesero en el puerto 5174.'
-            : 'Usa el Panel de Cocina en el puerto 5175.',
-        };
-      }
       saveSession(session);
       setUser(session.usuario);
       return { success: true, usuario: session.usuario };

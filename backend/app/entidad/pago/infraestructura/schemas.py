@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -45,3 +46,19 @@ class PagoResponse(BaseModel):
     estado: Literal["pendiente", "verificado"]
     cambio: Decimal | None = None
     recibo: dict[str, object]
+
+
+class PagoPendienteResponse(BaseModel):
+    id_transaccion: int
+    id_pedido: int
+    id_mesa: int
+    numero_mesa: int
+    cliente: str
+    monto: Decimal
+    propina: Decimal
+    total: Decimal
+    fecha: datetime
+
+
+class PagoEfectivoVerificarRequest(BaseModel):
+    recibido: Decimal = Field(gt=0)

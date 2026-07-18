@@ -1,7 +1,7 @@
 import { apiClient } from '@/api/client';
 import type { KitchenOrder, PedidoTransition } from '@/types';
 
-const ESTADOS_COCINA = 'espera,cocina,listo,entregado,pagado';
+const ESTADOS_COCINA = 'espera,cocina,listo';
 
 export async function getKitchenOrders(): Promise<KitchenOrder[]> {
   const response = await apiClient.get<KitchenOrder[]>('/pedidos', {

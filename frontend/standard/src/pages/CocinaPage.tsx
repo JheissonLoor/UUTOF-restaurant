@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, Clock, Hash, User, Package, RefreshCcw } from 'lucide-react';
+import { Filter, Hash, User, Package, RefreshCcw, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { avanzarPedido, getKitchenOrders } from '@/api/cocina';
 import { formatCurrency } from '@/lib/format';
-import { useWebSocket } from '@/realtime/useWebSocket';
 import { ErrorState } from '@/components/ErrorState';
 import type { EstadoCocina, KitchenOrder, PedidoTransition } from '@/types';
 
@@ -21,9 +20,7 @@ interface EstadoConfig {
 const COLUMNS: EstadoConfig[] = [
   { estado: 'espera', label: 'En Espera', colorVar: '--status-waiting', transition: 'empezarPreparacion', nextLabel: 'Empezar preparación' },
   { estado: 'cocina', label: 'En Preparación', colorVar: '--status-in-progress', transition: 'marcarTerminado', nextLabel: 'Marcar listo' },
-  { estado: 'listo', label: 'Listo', colorVar: '--status-done', transition: 'entregarMesa', nextLabel: 'Entregar a mesa' },
-  { estado: 'entregado', label: 'Entregado', colorVar: '--status-unpaid' },
-  { estado: 'pagado', label: 'Pagado', colorVar: '--status-paid' },
+  { estado: 'listo', label: 'Terminado', colorVar: '--status-done' },
 ];
 
 const CONFIG_BY_ESTADO = Object.fromEntries(COLUMNS.map((c) => [c.estado, c])) as Record<EstadoCocina, EstadoConfig>;
@@ -32,14 +29,9 @@ export default function CocinaPage() {
   const { data: orders, isLoading, isError, refetch } = useQuery({
     queryKey: ['cocina'],
     queryFn: getKitchenOrders,
-    refetchInterval: 20000,
+    refetchInterval: 30000,
   });
-  const { lastEvent } = useWebSocket(true);
   const [filterMesa, setFilterMesa] = useState('');
-
-  useEffect(() => {
-    if (lastEvent && lastEvent.tipo !== 'pong') void refetch();
-  }, [lastEvent, refetch]);
 
   const avanzarMutation = useMutation({
     mutationFn: ({ id, transicion }: { id: number; transicion: PedidoTransition }) => avanzarPedido(id, transicion),
@@ -53,7 +45,7 @@ export default function CocinaPage() {
 
   const all = useMemo(() => orders ?? [], [orders]);
   const uniqueMesas = useMemo(() => [...new Set(all.map((o) => o.mesa))].sort((a, b) => a - b), [all]);
-  const activos = all.filter((o) => o.estado !== 'pagado').length;
+  const activos = all.length;
 
   const move = (order: KitchenOrder) => {
     const cfg = CONFIG_BY_ESTADO[order.estado];
@@ -64,8 +56,8 @@ export default function CocinaPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="h-9 w-52 rounded-xl bg-muted animate-pulse mb-6" />
-        <div className="grid lg:grid-cols-5 gap-4">
-          {Array.from({ length: 5 }).map((_, i) => (
+        <div className="grid lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-64 rounded-2xl bg-muted animate-pulse" />
           ))}
         </div>
@@ -86,7 +78,7 @@ export default function CocinaPage() {
         className="bg-card rounded-2xl border p-4 hover:shadow-md transition-shadow"
       >
         <div className="flex items-center justify-between mb-2.5">
-          <span className="font-heading font-bold text-lg">#{order.mesa}</span>
+          <span className="font-heading font-bold text-lg">Mesa {order.mesa}</span>
           <span
             className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
             style={{ color: `hsl(var(${cfg.colorVar}))`, background: `hsl(var(${cfg.colorVar}) / 0.12)` }}
@@ -102,7 +94,7 @@ export default function CocinaPage() {
           <span>{order.items.map((i) => `${i.qty}x ${i.nombre}`).join(', ')}</span>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
-          <Clock className="h-3 w-3" /> {order.minutos} min · {formatCurrency(order.total)}
+          <ReceiptText className="h-3 w-3" /> Pedido #{order.id_pedido} · {formatCurrency(order.total)}
         </div>
         {cfg.transition && (
           <motion.button
@@ -144,7 +136,7 @@ export default function CocinaPage() {
       </div>
 
       {/* Kanban desktop */}
-      <div className="hidden lg:grid lg:grid-cols-5 gap-4">
+      <div className="hidden lg:grid lg:grid-cols-3 gap-4">
         {COLUMNS.map((col) => {
           const colOrders = all.filter(
             (o) => o.estado === col.estado && (!filterMesa || o.mesa.toString() === filterMesa),

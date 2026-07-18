@@ -1,78 +1,77 @@
 # UTTOF - Plan Estándar
 
-Frontend del **plan estándar o Básico** de UTTOF: **una sola app web todo-en-uno** que reúne los 4 roles del restaurante (cliente, cocina, mesero y admin), con el diseño cálido de la marca y conectada al backend real (FastAPI) de UTTOF.
+Aplicación web todo-en-uno del plan **Estándar** de UTTOF. Cliente, Verificador, Cocina y Administrador ingresan desde la misma URL; la autenticación JWT dirige a cada persona al área permitida por su rol.
 
-A diferencia de los frontends dedicados (`cliente`, `mesero`, `cocina-basico`, `kds`), el plan estándar unifica todo en un solo app: al iniciar sesión, cada usuario aterriza en el panel de su rol.
+Este frontend está conectado al backend FastAPI real. No incluye funciones reservadas para Operación Pro o Multi-local, como aplicaciones independientes por rol, pagos divididos, exportación de reportes, KDS oscuro, cronómetros de urgencia o WebSocket de cocina.
 
-## Roles y paneles
+## Roles y rutas
 
-| Rol | Ruta | Panel |
-| --- | --- | --- |
-| `cliente` | `/menu`, `/mesa`, `/reservar`, `/mis-pedidos` | Carta, mesa, reservas, pedido y pago |
-| `cocina` | `/cocina` | Tablero kanban de pedidos por estado |
-| `mesero` | `/mesero` | Verificación de salida (pagado / pendiente) |
-| `admin` | `/admin` | Dashboard + gestión: menú, mesas, usuarios y configuración |
+| Perfil visible | Rol técnico | Ruta principal | Funciones |
+| --- | --- | --- | --- |
+| Cliente | `cliente` | `/menu` | Carta, carrito, check-in, pedido, seguimiento, pago, reserva y reseña |
+| Verificador | `mesero` | `/mesero` | Bandeja de cobros en efectivo, monto recibido, cambio y confirmación |
+| Cocina | `cocina` | `/cocina` | Kanban simple de tres estados con actualización cada 30 segundos |
+| Administrador | `admin` | `/admin` | Dashboard, menú, mesas, usuarios, reportes en pantalla y configuración |
+
+El nombre técnico `mesero` se mantiene en JWT y base de datos por compatibilidad. En el plan Estándar su función visible es **Verificador de efectivo**, no una aplicación operativa de atención en mesa.
+
+## Funciones incluidas
+
+- Login, registro, persistencia de sesión y renovación automática del access token.
+- Autorización por rol en rutas y endpoints.
+- Carta conectada a categorías y platillos del backend, con moneda peruana `S/`.
+- Check-in de mesa y creación del pedido directo a cocina.
+- Seguimiento del pedido por polling cada 30 segundos.
+- Checkout postpago con tarjeta, Yape o efectivo.
+- Verificación del efectivo antes de marcar el pedido como pagado y liberar la mesa.
+- Reservas y reseña del cliente.
+- Cocina con columnas En espera, En preparación y Terminado.
+- Administración de menú, mesas, usuarios y configuración del restaurante.
+- Dashboard y reporte de ventas por rango, agrupado por día, semana o mes.
+- Estados de carga, vacío, error y confirmaciones visuales.
 
 ## Stack
 
-- React 18 + TypeScript + Vite.
-- Tailwind CSS (tema de marca: terracota/olivo, Playfair Display + DM Sans).
-- axios + @tanstack/react-query contra la API `/v1`.
-- framer-motion, lucide-react, sonner.
-- Localización Perú: moneda PEN (`S/`) vía `Intl.NumberFormat('es-PE')`, zona horaria `America/Lima`.
-
-## Funcionalidades
-
-- Autenticación real JWT (`/v1/auth/login`, `/register`, `/refresh`) con persistencia de sesión y refresh automático.
-- Landing y registro de cliente.
-- Carta conectada a `/v1/menu` (categorías + platillos) con precios en soles.
-- Carrito persistente (localStorage) con buscador y filtros por categoría.
-- Selección de mesa desde `/v1/mesas` con check-in (`/mesas/{id}/checkin`).
-- Envío de pedido a cocina (`/v1/pedidos`) desde el carrito.
-- Seguimiento del pedido con tracker de estado (recibido → cocina → listo → entregado → pagado), con polling automático.
-- Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo y mixto) + reseña (`/v1/resenas`).
-- El efectivo queda pendiente hasta que un mesero confirma la recepción; el pago mixto registra su desglose entre Yape y tarjeta.
-- Reservas (`/v1/reservas`): formulario con mesa/fecha/hora/personas/notas y listado de reservas del día.
-- Seguimiento del pedido en tiempo real por **WebSocket** (con reconexión automática y polling de respaldo).
-- Panel de administración (solo rol `admin`) con dashboard desde `/v1/reportes/dashboard`: KPIs del día (ingresos, pedidos, ocupación, ticket promedio) con variación vs. ayer, ingresos por día, pedidos por estado, top platillos, pagos por tipo, alertas y actividad reciente.
-
-### Ideas para más adelante
-
-- Reporte de ventas por rango (`/v1/reportes/ventas`) con exportación.
-- CRUD de menú/mesas desde el panel admin (`/v1/menu`, `/v1/mesas`).
-- Edición de configuración del restaurante (`/v1/configuracion`).
+- React 18, TypeScript y Vite.
+- Tailwind CSS con la identidad visual UTTOF.
+- Axios y TanStack Query.
+- React Router, Framer Motion, Lucide React y Sonner.
+- Formato `es-PE`, moneda PEN y zona horaria `America/Lima`.
 
 ## Configuración
 
-Copia `.env.example` a `.env` y ajusta la URL del backend si corre en otro host:
+Crea `.env` a partir de `.env.example`:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
 
 ```env
 VITE_API_URL=http://localhost:8000/v1
-VITE_WS_URL=ws://localhost:8000/ws
 ```
 
-## Levantar en local
+## Ejecución
 
-```bash
-npm install
-npm run dev
+```powershell
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\standard"
+npm.cmd install
+npm.cmd run dev
 ```
 
-URL: `http://127.0.0.1:5178`
-
-## Validaciones
-
-```bash
-npm run lint    # oxlint
-npm run build   # tsc -b && vite build
-```
+URL local: `http://127.0.0.1:5178`
 
 ## Credenciales demo
 
-Las mismas del backend UTTOF: `cliente@uttof.pe / cliente123`, `admin@uttof.pe / admin123`.
+| Perfil | Email | Contraseña |
+| --- | --- | --- |
+| Cliente | `cliente@uttof.pe` | `cliente123` |
+| Verificador | `mesero@uttof.pe` | `mesero123` |
+| Cocina | `cocina@uttof.pe` | `cocina123` |
+| Administrador | `admin@uttof.pe` | `admin123` |
 
-Los roles `mesero` y `cocina` usan sus aplicaciones operativas en los puertos `5174` y `5175`; no ingresan por este frontend.
+## Validación
+
+```powershell
+npm.cmd run lint
+npm.cmd run build
+```

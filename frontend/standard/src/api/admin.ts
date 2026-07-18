@@ -16,8 +16,14 @@ import type {
 
 // ===== Menú =====
 export async function getPlatillosAdmin(): Promise<PlatilloApi[]> {
-  const response = await apiClient.get<PlatillosPage>('/menu/platillos', { params: { limit: 100 } });
-  return response.data.data;
+  const platillos: PlatilloApi[] = [];
+  let cursor: string | undefined;
+  do {
+    const response = await apiClient.get<PlatillosPage>('/menu/platillos', { params: { limit: 50, cursor } });
+    platillos.push(...response.data.data);
+    cursor = response.data.next_cursor ?? undefined;
+  } while (cursor);
+  return platillos;
 }
 
 export async function crearPlatillo(payload: PlatilloCreate): Promise<PlatilloApi> {
@@ -38,8 +44,14 @@ export async function cambiarEstadoMesa(idMesa: number, estado: EstadoMesa): Pro
 
 // ===== Usuarios =====
 export async function getUsuarios(): Promise<UsuarioPublico[]> {
-  const response = await apiClient.get<UsuariosPage>('/usuarios', { params: { limit: 100 } });
-  return response.data.data;
+  const usuarios: UsuarioPublico[] = [];
+  let cursor: string | undefined;
+  do {
+    const response = await apiClient.get<UsuariosPage>('/usuarios', { params: { limit: 50, cursor } });
+    usuarios.push(...response.data.data);
+    cursor = response.data.next_cursor ?? undefined;
+  } while (cursor);
+  return usuarios;
 }
 
 export async function crearUsuario(payload: UsuarioCreate): Promise<UsuarioPublico> {

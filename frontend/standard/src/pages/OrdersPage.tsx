@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Clock, ChefHat, CheckCircle2, Utensils, Receipt, ShoppingBag, Radio } from 'lucide-react';
+import { Clock, ChefHat, CheckCircle2, Utensils, Receipt, ShoppingBag } from 'lucide-react';
 
 import { getPedido } from '@/api/pedidos';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useOrder } from '@/order/useOrder';
-import { useWebSocket } from '@/realtime/useWebSocket';
 import { Checkout } from '@/components/Checkout';
 import { ErrorState } from '@/components/ErrorState';
 import type { PedidoEstado } from '@/types';
@@ -44,23 +43,11 @@ export default function OrdersPage() {
     queryKey: ['pedido', activePedidoId],
     queryFn: () => getPedido(activePedidoId as number),
     enabled: activePedidoId !== null,
-    // El WebSocket es la vía principal en vivo; el polling queda como respaldo.
     refetchInterval: (query) => {
       const estado = query.state.data?.estado;
       return estado === 'pagado' || estado === 'cancelado' ? false : 30000;
     },
   });
-
-  const estado = pedido?.estado;
-  const enVivo = activePedidoId !== null && estado !== 'pagado' && estado !== 'cancelado';
-  const { lastEvent, connected } = useWebSocket(enVivo);
-
-  useEffect(() => {
-    if (!lastEvent || activePedidoId === null) return;
-    if ('id_pedido' in lastEvent && lastEvent.id_pedido === activePedidoId) {
-      void refetch();
-    }
-  }, [lastEvent, activePedidoId, refetch]);
 
   if (activePedidoId === null) {
     return (
@@ -117,11 +104,6 @@ export default function OrdersPage() {
             Mesa #{pedido.id_mesa} · {pedido.items.length} platillo{pedido.items.length !== 1 ? 's' : ''}
           </p>
         </div>
-        {enVivo && connected && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-status-paid bg-status-paid/10 px-3 py-1.5 rounded-full">
-            <Radio className="h-3.5 w-3.5 animate-pulse" /> En vivo
-          </span>
-        )}
       </div>
 
       {/* Tracker de estado */}
@@ -187,7 +169,7 @@ export default function OrdersPage() {
           </div>
         ) : pagoPendiente ? (
           <div className="mt-5 rounded-2xl bg-accent/10 text-foreground text-sm font-medium px-4 py-3 text-center">
-            Pago en efectivo pendiente de verificación por el mesero.
+            Pago en efectivo pendiente de verificación.
           </div>
         ) : (
           <button

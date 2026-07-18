@@ -57,16 +57,28 @@ design_handoff_mesero/
 design_handoff_panel_admin/
 ```
 
+## Modelo De Planes
+
+UTTOF se organiza en tres niveles comerciales. Todos comparten el mismo backend, pero cada frontend expone solamente las funciones de su plan.
+
+| Plan | Precio de referencia | Experiencia | Implementacion actual |
+| --- | ---: | --- | --- |
+| Estandar | S/ 99 | Una sola aplicacion para Cliente, Verificador, Cocina y Admin | `frontend/standard` |
+| Operacion Pro | S/ 249 | Aplicaciones dedicadas para cada area operativa | `frontend/admin`, `frontend/mesero`, `frontend/cliente`, `frontend/cocina-basico` |
+| Multi-local | S/ 599 | Operacion avanzada, tiempo real y administracion de varias sedes | `frontend/kds` como primer modulo premium |
+
+La carpeta `cocina-basico` conserva su nombre historico para evitar romper rutas y despliegues. Dentro del modelo comercial actual representa la cocina dedicada de **Operacion Pro**; el tablero simple del plan Estandar vive dentro de `frontend/standard`.
+
 ## Roles
 
-Actualmente el sistema maneja 4 roles:
+El backend maneja cuatro roles tecnicos:
 
-| Rol | Descripcion |
+| Rol | Responsabilidad |
 | --- | --- |
-| `admin` | Gestiona dashboard, menu, mesas, reservas, usuarios, reportes y configuracion. |
-| `mesero` | Gestiona mesas asignadas, pedidos, platos listos y cobros. |
-| `cocina` | Usa el panel cocina basico y el KDS Premium para seguimiento de pedidos. |
-| `cliente` | Realiza check-in QR, consulta carta, envia pedidos, sigue estados, paga postpago, reserva y registra resenas. |
+| `admin` | Gestiona dashboard, menu, mesas, usuarios, reportes y configuracion. |
+| `mesero` | En Estandar actua como Verificador; en Pro gestiona mesas, pedidos y cobros. |
+| `cocina` | Atiende el tablero simple, la cocina dedicada Pro o el KDS Multi-local. |
+| `cliente` | Realiza check-in, consulta la carta, envia pedidos, sigue estados, paga, reserva y registra resenas. |
 
 ## Funcionalidades Implementadas
 
@@ -79,13 +91,23 @@ Backend:
 - Menu: categorias, platillos, creacion y actualizacion.
 - Mesas: listado, estado, check-in y sentar comensales.
 - Pedidos: listado para cocina, cambio de estado por flujo, detalle, creacion desde cliente, agregar items, llamar cocina, marcar item entregado y generar cuenta.
-- Pagos: tarjeta, Yape, efectivo y mixto; el efectivo solicitado por el cliente queda pendiente hasta que el mesero verifica el cobro.
+- Pagos compartidos: tarjeta, Yape, efectivo y mixto. En Estandar se muestran tarjeta, Yape y efectivo; el pago dividido queda reservado para Multi-local.
+- Verificacion de efectivo: bandeja por mesas asignadas, monto recibido, cambio, confirmacion atomica y liberacion de mesa.
 - Reservas y resenas para la experiencia del cliente.
 - Reportes: dashboard y ventas.
 - Configuracion base del restaurante.
 - WebSocket base para eventos realtime con admin, mesero, cocina y cliente.
 
-Frontend Admin:
+Frontend Estandar (`frontend/standard`):
+
+- Una URL para los cuatro perfiles, con redireccion por rol despues del login.
+- Cliente: carta, carrito, check-in, pedido, seguimiento por polling, pago, reserva y resena.
+- Verificador: cobros en efectivo pendientes, confirmacion del monto recibido y calculo de cambio.
+- Cocina: kanban claro de tres estados, avance del pedido completo y polling cada 30 segundos.
+- Admin: dashboard, menu, mesas, usuarios, reportes por rango y configuracion.
+- No expone pagos divididos, exportaciones, cronometros de urgencia ni KDS en tiempo real.
+
+Operacion Pro - Frontend Admin:
 
 - Login protegido por rol admin.
 - Dashboard conectado al backend.
@@ -93,7 +115,7 @@ Frontend Admin:
 - Modulos de menu, mesas, reservas, empleados, reportes y configuracion.
 - Estados de carga, error y vacio en pantallas principales.
 
-Frontend Mesero:
+Operacion Pro - Frontend Mesero:
 
 - Login del mesero.
 - Lista de mesas asignadas.
@@ -107,7 +129,7 @@ Frontend Mesero:
 - Cobrar cuenta con tarjeta, efectivo o Yape.
 - Liberar mesa despues del pago.
 
-Frontend Cocina Basico:
+Operacion Pro - Frontend Cocina Dedicada (`cocina-basico`):
 
 - Login para rol cocina o admin.
 - Tablero kanban claro con columnas: en espera, en preparacion, terminado, por pagar y pagado.
@@ -116,7 +138,7 @@ Frontend Cocina Basico:
 - Filtros por estado con contador.
 - Estados de carga, error, vacio y toast de confirmacion.
 
-Frontend KDS Premium:
+Multi-local - KDS Premium:
 
 - Tema oscuro de alto contraste para monitor de cocina o tablet horizontal.
 - Login para rol cocina o admin.
@@ -135,7 +157,7 @@ Frontend KDS Premium:
 - WebSocket con reconexion automatica, resaltado de tickets y refetch ante eventos de pedido.
 - Estados de carga, error, vacio y confirmaciones visuales.
 
-Frontend Cliente:
+Operacion Pro - Frontend Cliente:
 
 - Entrada walk-in con simulacion de escaneo QR y confirmacion de mesa.
 - Sesion automatica de cliente demo con JWT y refresh.
@@ -147,20 +169,14 @@ Frontend Cliente:
 - Reserva simple y registro de resena.
 - Estados de carga, error, vacio y confirmaciones visuales.
 
-Frontend Plan Estandar:
-
-- Experiencia web unificada para cliente y administrador en el plan Basico.
-- Carta, carrito, check-in, pedido, seguimiento, checkout y reservas conectados al backend real.
-- Panel administrativo resumido para indicadores operativos.
-- Acceso restringido a cliente y admin; mesero y cocina conservan sus aplicaciones operativas.
-
 ## Pendiente
 
-- Division avanzada de cuenta.
+- Consolidar el empaquetado comercial y los feature flags de Operacion Pro.
+- Completar Multi-local: inventario, varias sedes, exportaciones, pagos divididos, fidelizacion y modo offline.
 - Cambio de mesa.
 - QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
 - Pruebas automatizadas mas amplias.
-- Despliegue.
+- Despliegue en infraestructura publica.
 
 ## Configuracion Inicial
 
@@ -228,7 +244,7 @@ URL:
 http://127.0.0.1:5178
 ```
 
-## Levantar Panel Admin
+## Levantar Operacion Pro - Admin
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\admin"
@@ -242,7 +258,7 @@ URL:
 http://127.0.0.1:5173
 ```
 
-## Levantar App Mesero
+## Levantar Operacion Pro - Mesero
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\mesero"
@@ -256,7 +272,7 @@ URL:
 http://127.0.0.1:5174
 ```
 
-## Levantar Panel Cocina Basico
+## Levantar Operacion Pro - Cocina Dedicada
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina-basico"
@@ -270,7 +286,7 @@ URL:
 http://127.0.0.1:5175
 ```
 
-## Levantar App Cliente
+## Levantar Operacion Pro - Cliente
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cliente"
@@ -284,7 +300,7 @@ URL:
 http://127.0.0.1:5176
 ```
 
-## Levantar KDS Premium
+## Levantar Multi-local - KDS Premium
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\kds"

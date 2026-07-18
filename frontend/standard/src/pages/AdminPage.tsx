@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LayoutDashboard, UtensilsCrossed, Armchair, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Armchair, Users, Settings, BarChart3 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { AdminDashboard } from '@/pages/admin/AdminDashboard';
@@ -7,14 +7,16 @@ import { MenuAdmin } from '@/pages/admin/MenuAdmin';
 import { MesasAdmin } from '@/pages/admin/MesasAdmin';
 import { UsuariosAdmin } from '@/pages/admin/UsuariosAdmin';
 import { ConfigAdmin } from '@/pages/admin/ConfigAdmin';
+import { ReportesAdmin } from '@/pages/admin/ReportesAdmin';
 
-type TabKey = 'dashboard' | 'menu' | 'mesas' | 'usuarios' | 'config';
+type TabKey = 'dashboard' | 'menu' | 'mesas' | 'usuarios' | 'reportes' | 'config';
 
 const tabs: Array<{ key: TabKey; label: string; icon: typeof LayoutDashboard }> = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'menu', label: 'Menú', icon: UtensilsCrossed },
   { key: 'mesas', label: 'Mesas', icon: Armchair },
   { key: 'usuarios', label: 'Usuarios', icon: Users },
+  { key: 'reportes', label: 'Reportes', icon: BarChart3 },
   { key: 'config', label: 'Configuración', icon: Settings },
 ];
 
@@ -47,6 +49,7 @@ export default function AdminPage() {
       {tab === 'menu' && <MenuAdmin />}
       {tab === 'mesas' && <MesasAdmin />}
       {tab === 'usuarios' && <UsuariosAdmin />}
+      {tab === 'reportes' && <ReportesAdmin />}
       {tab === 'config' && <ConfigAdmin />}
     </div>
   );

@@ -33,10 +33,10 @@ export default function RegisterPage() {
   };
 
   const fields = [
-    { key: 'nombre' as const, label: 'Nombre', icon: User, type: 'text', placeholder: 'Tu nombre' },
-    { key: 'email' as const, label: 'Email', icon: Mail, type: 'email', placeholder: 'tu@email.com' },
-    { key: 'telefono' as const, label: 'Teléfono', icon: Phone, type: 'tel', placeholder: '999 000 111' },
-    { key: 'password' as const, label: 'Contraseña', icon: Lock, type: 'password', placeholder: '••••••••' },
+    { key: 'nombre' as const, label: 'Nombre', icon: User, type: 'text', placeholder: 'Tu nombre', autoComplete: 'name' },
+    { key: 'email' as const, label: 'Email', icon: Mail, type: 'email', placeholder: 'tu@email.com', autoComplete: 'email' },
+    { key: 'telefono' as const, label: 'Teléfono', icon: Phone, type: 'tel', placeholder: '999 000 111', autoComplete: 'tel' },
+    { key: 'password' as const, label: 'Contraseña', icon: Lock, type: 'password', placeholder: '••••••••', autoComplete: 'new-password' },
   ];
 
   return (
@@ -60,7 +60,9 @@ export default function RegisterPage() {
               <div className="relative">
                 <field.icon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
+                  name={field.key}
                   type={field.type}
+                  autoComplete={field.autoComplete}
                   value={form[field.key]}
                   onChange={update(field.key)}
                   className="w-full pl-11 pr-4 py-3 rounded-2xl border bg-background text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition"

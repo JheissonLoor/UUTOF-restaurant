@@ -1,170 +1,226 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, CheckCircle2, XCircle, Clock, ClipboardCheck, History } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Banknote, CheckCircle2, Clock3, RefreshCw, Search } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { getKitchenOrders } from '@/api/cocina';
+import { getPagosPendientes, verificarPago } from '@/api/verificador';
+import { ErrorState } from '@/components/ErrorState';
 import { formatCurrency } from '@/lib/format';
-import type { KitchenOrder } from '@/types';
+import type { PagoPendiente } from '@/types';
 
-interface VerificationLog {
-  query: string;
-  result: 'paid' | 'pending' | 'not_found';
-  customer?: string;
-  mesa?: number;
-  time: string;
+interface PagoVerificado {
+  idTransaccion: number;
+  mesa: number;
+  cliente: string;
+  total: number;
+  recibido: number;
+  cambio: number;
 }
 
-type SearchResult = KitchenOrder | 'not_found' | null;
+function PagoSkeleton() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {[0, 1, 2, 3].map((item) => (
+        <div key={item} className="h-40 animate-pulse rounded-2xl border bg-muted" />
+      ))}
+    </div>
+  );
+}
 
 export default function MeseroPage() {
-  const { data: orders } = useQuery({ queryKey: ['cocina'], queryFn: getKitchenOrders, refetchInterval: 20000 });
-  const [query, setQuery] = useState('');
-  const [result, setResult] = useState<SearchResult>(null);
-  const [history, setHistory] = useState<VerificationLog[]>([]);
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<PagoPendiente | null>(null);
+  const [recibido, setRecibido] = useState('');
+  const [lastVerified, setLastVerified] = useState<PagoVerificado | null>(null);
 
-  const handleSearch = () => {
-    const q = query.trim();
-    if (!q) return;
-    const found = (orders ?? []).find(
-      (o) => o.mesa.toString() === q || o.cliente.toLowerCase().includes(q.toLowerCase()),
+  const pagosQuery = useQuery({
+    queryKey: ['pagos-pendientes'],
+    queryFn: getPagosPendientes,
+    refetchInterval: 20000,
+  });
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return pagosQuery.data ?? [];
+    return (pagosQuery.data ?? []).filter(
+      (pago) => pago.numero_mesa.toString() === term || pago.cliente.toLowerCase().includes(term),
     );
-    setResult(found ?? 'not_found');
-    setHistory((prev) => [
-      {
-        query: q,
-        time: new Date().toLocaleTimeString('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit' }),
-        result: !found ? 'not_found' : found.estado === 'pagado' ? 'paid' : 'pending',
-        customer: found?.cliente,
-        mesa: found?.mesa,
-      },
-      ...prev.slice(0, 9),
-    ]);
+  }, [pagosQuery.data, search]);
+
+  const verifyMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected) throw new Error('Selecciona un pago');
+      const amount = Number(recibido);
+      if (!Number.isFinite(amount) || amount < selected.total) {
+        throw new Error(`El monto recibido debe ser al menos ${formatCurrency(selected.total)}`);
+      }
+      const response = await verificarPago(selected.id_transaccion, amount);
+      return { response, pago: selected, amount };
+    },
+    onSuccess: ({ response, pago, amount }) => {
+      const cambio = Number(response.cambio ?? amount - pago.total);
+      setLastVerified({
+        idTransaccion: pago.id_transaccion,
+        mesa: pago.numero_mesa,
+        cliente: pago.cliente,
+        total: pago.total,
+        recibido: amount,
+        cambio,
+      });
+      setSelected(null);
+      setRecibido('');
+      toast.success(`Pago de la mesa ${pago.numero_mesa} verificado`);
+      void queryClient.invalidateQueries({ queryKey: ['pagos-pendientes'] });
+    },
+    onError: (error: Error) => toast.error(error.message || 'No se pudo verificar el pago'),
+  });
+
+  const openPayment = (pago: PagoPendiente) => {
+    setSelected(pago);
+    setRecibido(pago.total.toFixed(2));
+    setLastVerified(null);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <ClipboardCheck className="h-5 w-5 text-primary" />
+    <main className="container mx-auto max-w-5xl px-4 py-8">
+      <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="mb-2 flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+              <Banknote className="h-5 w-5 text-primary" />
+            </span>
+            <h1 className="font-heading text-3xl font-bold">Verificador de efectivo</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">Confirma los cobros en efectivo antes de liberar la mesa.</p>
         </div>
-        <h1 className="font-heading text-3xl font-bold">Verificación de Salida</h1>
-      </div>
-      <p className="text-muted-foreground mb-8 ml-[52px]">Busca por número de mesa o nombre del cliente</p>
-
-      <div className="flex gap-3 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="w-full pl-11 pr-4 py-3.5 rounded-2xl border bg-card text-sm focus:ring-2 focus:ring-primary/30 outline-none transition"
-            placeholder="Mesa # o nombre del cliente…"
-          />
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={handleSearch}
-          className="px-7 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition shadow-md shadow-primary/20"
+        <button
+          type="button"
+          onClick={() => void pagosQuery.refetch()}
+          disabled={pagosQuery.isFetching}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-card px-4 text-sm font-medium transition hover:bg-muted disabled:opacity-60"
         >
-          Buscar
-        </motion.button>
+          <RefreshCw className={`h-4 w-4 ${pagosQuery.isFetching ? 'animate-spin' : ''}`} />
+          Actualizar
+        </button>
       </div>
 
-      <AnimatePresence mode="wait">
-        {result && result !== 'not_found' && (
-          <motion.div
-            key={`found-${result.id_pedido}`}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 20 }}
-          >
-            {result.estado === 'pagado' ? (
-              <div className="text-center p-12 rounded-3xl border-2 border-status-paid bg-status-paid/5">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }}>
-                  <CheckCircle2 className="h-24 w-24 text-status-paid mx-auto mb-5" />
-                </motion.div>
-                <h2 className="font-heading text-4xl font-bold text-status-paid mb-3">PAGADO ✓</h2>
-                <p className="text-xl font-semibold mb-1">Puede salir</p>
-                <p className="text-muted-foreground">
-                  {result.cliente} · Mesa #{result.mesa}
-                </p>
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-status-paid/10 text-status-paid text-sm font-medium">
-                  Total: {formatCurrency(result.total)}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center p-12 rounded-3xl border-2 border-destructive bg-destructive/5">
-                <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }}>
-                  <XCircle className="h-24 w-24 text-destructive mx-auto mb-5" />
-                </motion.div>
-                <h2 className="font-heading text-4xl font-bold text-destructive mb-3">PENDIENTE ✗</h2>
-                <p className="text-xl font-semibold mb-1">No puede salir todavía</p>
-                <p className="text-muted-foreground">
-                  {result.cliente} · Mesa #{result.mesa}
-                </p>
-                <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-destructive/10 text-destructive text-sm font-medium capitalize">
-                  Estado: {result.estado}
-                </div>
-              </div>
-            )}
-          </motion.div>
-        )}
+      <div className="relative mb-6">
+        <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          className="min-h-12 w-full rounded-2xl border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+          placeholder="Buscar por mesa o cliente"
+        />
+      </div>
 
-        {result === 'not_found' && (
-          <motion.div
-            key="not-found"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center py-16 rounded-3xl border bg-card"
-          >
-            <Search className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-            <p className="text-muted-foreground font-medium">No se encontró ningún pedido</p>
-            <p className="text-sm text-muted-foreground mt-1">Intenta con otro número de mesa o nombre</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {lastVerified && (
+        <section className="mb-6 rounded-2xl border border-status-paid/40 bg-status-paid/5 p-5" aria-live="polite">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-status-paid" />
+            <div>
+              <h2 className="font-heading text-xl font-semibold text-status-paid">Pago verificado</h2>
+              <p className="mt-1 text-sm">{lastVerified.cliente} · Mesa {lastVerified.mesa}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Total {formatCurrency(lastVerified.total)} · Recibido {formatCurrency(lastVerified.recibido)} · Cambio{' '}
+                <strong className="text-foreground">{formatCurrency(lastVerified.cambio)}</strong>
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
-      {history.length > 0 && (
-        <div className="mt-10">
-          <div className="flex items-center gap-2 mb-4">
-            <History className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-muted-foreground">Búsquedas recientes</h3>
-          </div>
-          <div className="space-y-2">
-            {history.map((log, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center justify-between p-3 rounded-xl bg-card border text-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`w-2.5 h-2.5 rounded-full ${
-                      log.result === 'paid'
-                        ? 'bg-status-paid'
-                        : log.result === 'pending'
-                          ? 'bg-destructive'
-                          : 'bg-muted-foreground'
-                    }`}
-                  />
-                  <span>{log.customer ? `${log.customer} · Mesa #${log.mesa}` : `"${log.query}" — No encontrado`}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span className="text-xs">{log.time}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+      {pagosQuery.isLoading && <PagoSkeleton />}
+      {pagosQuery.isError && (
+        <ErrorState message="No se pudieron cargar los pagos pendientes." onRetry={() => pagosQuery.refetch()} />
+      )}
+      {!pagosQuery.isLoading && !pagosQuery.isError && filtered.length === 0 && (
+        <div className="rounded-2xl border bg-card px-6 py-16 text-center">
+          <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-status-paid" />
+          <h2 className="font-heading text-xl font-semibold">No hay cobros pendientes</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {search ? 'No hay coincidencias para esta búsqueda.' : 'Los nuevos pagos en efectivo aparecerán aquí.'}
+          </p>
         </div>
       )}
-    </div>
+      {!pagosQuery.isLoading && !pagosQuery.isError && filtered.length > 0 && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {filtered.map((pago) => (
+            <article key={pago.id_transaccion} className="rounded-2xl border bg-card p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase text-primary">Mesa {pago.numero_mesa}</p>
+                  <h2 className="mt-1 font-heading text-xl font-semibold">{pago.cliente}</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">Pedido #{pago.id_pedido}</p>
+                </div>
+                <span className="rounded-full bg-status-waiting/15 px-3 py-1 text-xs font-semibold text-foreground">Pendiente</span>
+              </div>
+              <div className="my-4 flex items-end justify-between border-y py-3">
+                <span className="text-sm text-muted-foreground">Total a cobrar</span>
+                <strong className="text-xl">{formatCurrency(pago.total)}</strong>
+              </div>
+              <div className="mb-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                {new Date(pago.fecha).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })}
+              </div>
+              <button
+                type="button"
+                onClick={() => openPayment(pago)}
+                className="min-h-11 w-full rounded-xl bg-primary px-4 font-semibold text-primary-foreground transition hover:brightness-110"
+              >
+                Confirmar cobro
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/40 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true">
+          <section className="w-full max-w-md rounded-t-3xl border bg-card p-6 shadow-xl sm:rounded-3xl">
+            <p className="text-xs font-semibold uppercase text-primary">Mesa {selected.numero_mesa}</p>
+            <h2 className="mt-1 font-heading text-2xl font-bold">Confirmar efectivo</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{selected.cliente} · Total {formatCurrency(selected.total)}</p>
+
+            <label className="mt-5 block text-sm font-medium" htmlFor="monto-recibido">Monto recibido</label>
+            <div className="relative mt-2">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">S/</span>
+              <input
+                id="monto-recibido"
+                type="number"
+                min={selected.total}
+                step="0.10"
+                value={recibido}
+                onChange={(event) => setRecibido(event.target.value)}
+                className="min-h-12 w-full rounded-xl border bg-background pl-12 pr-4 text-lg font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                autoFocus
+              />
+            </div>
+            {Number(recibido) >= selected.total && (
+              <p className="mt-2 text-sm text-muted-foreground">Cambio: {formatCurrency(Number(recibido) - selected.total)}</p>
+            )}
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="min-h-11 rounded-xl border font-semibold transition hover:bg-muted"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => verifyMutation.mutate()}
+                disabled={verifyMutation.isPending || Number(recibido) < selected.total}
+                className="min-h-11 rounded-xl bg-primary font-semibold text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
+              >
+                {verifyMutation.isPending ? 'Verificando...' : 'Verificar pago'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+    </main>
   );
 }

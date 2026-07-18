@@ -116,6 +116,7 @@ export function AdminDashboard() {
   if (isError || !data) return <ErrorState message="No se pudo cargar el panel." onRetry={() => refetch()} />;
 
   const { hoy, distribucion, ingresos_por_dia, top_platillos, pagos_por_tipo, actividad, alertas } = data;
+  const pagosStandard = pagos_por_tipo.filter((pago) => !pago.name.toLowerCase().includes('mixto'));
   const maxDist = Math.max(1, ...distribucion.map((d) => d.count));
 
   return (
@@ -218,7 +219,7 @@ export function AdminDashboard() {
         <div className="bg-card rounded-3xl border p-6">
           <h2 className="font-heading text-lg font-semibold mb-4">Pagos por tipo</h2>
           <div className="space-y-3">
-            {pagos_por_tipo.map((p) => (
+            {pagosStandard.map((p) => (
               <div key={p.name} className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium capitalize">{p.name}</p>
@@ -230,7 +231,7 @@ export function AdminDashboard() {
                 </div>
               </div>
             ))}
-            {pagos_por_tipo.length === 0 && <p className="text-sm text-muted-foreground">Sin pagos registrados.</p>}
+            {pagosStandard.length === 0 && <p className="text-sm text-muted-foreground">Sin pagos registrados.</p>}
           </div>
         </div>
       </div>

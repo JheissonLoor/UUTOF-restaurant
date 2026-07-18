@@ -126,8 +126,6 @@ export function ConfigAdmin() {
         </Field>
         <div className="mt-2">
           <Toggle label="Email de reservas" checked={notificaciones.email_reservas} onChange={(v) => setN({ email_reservas: v })} />
-          <Toggle label="Alertas de stock bajo" checked={notificaciones.alertas_stock_bajo} onChange={(v) => setN({ alertas_stock_bajo: v })} />
-          <Toggle label="Sonido en cocina" checked={notificaciones.sonido_cocina} onChange={(v) => setN({ sonido_cocina: v })} />
           <Toggle label="Resumen diario por email" checked={notificaciones.resumen_diario_email} onChange={(v) => setN({ resumen_diario_email: v })} />
         </div>
       </section>

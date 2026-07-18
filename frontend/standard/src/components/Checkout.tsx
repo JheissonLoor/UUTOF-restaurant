@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, CreditCard, Smartphone, Wallet, Layers, Sparkles, Star } from 'lucide-react';
+import { X, Check, CreditCard, Smartphone, Wallet, Sparkles, Star } from 'lucide-react';
 
 import { crearResena, pedirCuenta, registrarPago } from '@/api/pedidos';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { MetodoPago, PagoParte, PedidoPublico } from '@/types';
+import type { MetodoPago, PedidoPublico } from '@/types';
 
 const methods: Array<{ id: MetodoPago; label: string; detail: string; icon: typeof CreditCard }> = [
   { id: 'tarjeta', label: 'Tarjeta', detail: 'Crédito o débito', icon: CreditCard },
   { id: 'yape', label: 'Yape / QR', detail: 'Escanea y confirma', icon: Smartphone },
   { id: 'efectivo', label: 'Efectivo', detail: 'Paga al mesero', icon: Wallet },
-  { id: 'mixto', label: 'Mixto', detail: 'Combinar métodos', icon: Layers },
 ];
 
 interface CheckoutProps {
@@ -28,7 +27,6 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [rating, setRating] = useState(5);
-  const [mixedYape, setMixedYape] = useState(0);
 
   useEffect(() => {
     pedirCuenta(pedido.id_pedido)
@@ -39,23 +37,11 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
   const tip = useMemo(() => Math.round(pedido.total * tipPct) / 100, [pedido.total, tipPct]);
   const total = pedido.total + tip;
 
-  useEffect(() => {
-    setMixedYape(Number((total / 2).toFixed(2)));
-  }, [total]);
-
   async function handlePay() {
     setError(null);
     setIsProcessing(true);
     try {
-      let desglose: PagoParte[] | undefined;
-      if (method === 'mixto') {
-        const yape = Math.min(Math.max(mixedYape, 0.01), total - 0.01);
-        desglose = [
-          { metodo: 'yape', monto: Number(yape.toFixed(2)) },
-          { metodo: 'tarjeta', monto: Number((total - yape).toFixed(2)) },
-        ];
-      }
-      await registrarPago(pedido.id_pedido, method, pedido.total, tip, desglose);
+      await registrarPago(pedido.id_pedido, method, pedido.total, tip);
       setStep('success');
     } catch {
       setError('No se pudo procesar el pago. Intenta de nuevo.');
@@ -204,29 +190,6 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
                 {method === 'efectivo' && (
                   <div className="mt-4 rounded-2xl bg-status-unpaid/10 text-status-unpaid px-4 py-3 text-sm">
                     El mesero verificará la recepción del efectivo desde su app.
-                  </div>
-                )}
-
-                {method === 'mixto' && (
-                  <div className="mt-4 rounded-2xl bg-background border p-4">
-                    <p className="text-sm font-semibold">Divide entre Yape y tarjeta</p>
-                    <label className="mt-3 block text-xs text-muted-foreground" htmlFor="mixed-yape">
-                      Monto por Yape
-                    </label>
-                    <input
-                      id="mixed-yape"
-                      type="number"
-                      min="0.01"
-                      max={Math.max(total - 0.01, 0.01)}
-                      step="0.01"
-                      value={mixedYape}
-                      onChange={(event) => setMixedYape(Number(event.target.value))}
-                      className="mt-1 w-full rounded-xl border bg-card px-3 py-2.5 text-sm"
-                    />
-                    <div className="mt-3 flex justify-between text-sm">
-                      <span className="text-muted-foreground">Resto por tarjeta</span>
-                      <span className="font-semibold">{formatCurrency(Math.max(total - mixedYape, 0))}</span>
-                    </div>
                   </div>
                 )}
 
