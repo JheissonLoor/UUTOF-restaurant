@@ -17,13 +17,17 @@ A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orie
 - Autenticación real JWT (`/v1/auth/login`, `/register`, `/refresh`) con persistencia de sesión y refresh automático.
 - Landing y registro de cliente.
 - Carta conectada a `/v1/menu` (categorías + platillos) con precios en soles.
-- Carrito local con buscador y filtros por categoría.
+- Carrito persistente (localStorage) con buscador y filtros por categoría.
+- Selección de mesa desde `/v1/mesas` con check-in (`/mesas/{id}/checkin`).
+- Envío de pedido a cocina (`/v1/pedidos`) desde el carrito.
+- Seguimiento del pedido con tracker de estado (recibido → cocina → listo → entregado → pagado), con polling automático.
+- Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo, mixto) + reseña (`/v1/resenas`).
 
 ### Pendiente (siguientes fases)
 
-- Envío de pedido a `/v1/pedidos` (requiere mesa / check-in).
-- Checkout y pagos (`/v1/pagos`: tarjeta, Yape, efectivo, mixto).
-- Reservas (`/v1/reservas`), seguimiento de pedido por WebSocket y reseñas.
+- Reservas (`/v1/reservas`).
+- Seguimiento del pedido por WebSocket (reemplazando el polling).
+- Panel admin (dashboard/ventas desde `/v1/reportes`).
 
 ## Configuración
 

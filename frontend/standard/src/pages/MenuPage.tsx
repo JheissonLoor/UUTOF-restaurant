@@ -1,23 +1,40 @@
 import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Plus, Minus, Trash2, X, Search, Sparkles } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, X, Search, Sparkles, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getDishes } from '@/api/menu';
+import { enviarPedido } from '@/api/pedidos';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { useOrder } from '@/order/useOrder';
 import { ErrorState } from '@/components/ErrorState';
 import { MenuSkeleton } from '@/components/MenuSkeleton';
-import type { CartItem, Dish } from '@/types';
+import type { Dish } from '@/types';
 
 export default function MenuPage() {
   const { data: dishes, isLoading, isError, refetch } = useQuery({ queryKey: ['menu'], queryFn: getDishes });
+  const { cart, cartTotal, cartCount, addToCart, updateQty, removeFromCart, clearCart, mesa, setActivePedidoId } =
+    useOrder();
+  const navigate = useNavigate();
 
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const enviarMutation = useMutation({
+    mutationFn: (idMesa: number) => enviarPedido(idMesa, cart),
+    onSuccess: (res) => {
+      setActivePedidoId(res.id_pedido);
+      clearCart();
+      setCartOpen(false);
+      toast.success('¡Pedido enviado a cocina!');
+      navigate('/mis-pedidos');
+    },
+    onError: () => toast.error('No se pudo enviar el pedido. Intenta de nuevo.'),
+  });
 
   const categories = useMemo(() => {
     if (!dishes) return [];
@@ -37,37 +54,23 @@ export default function MenuPage() {
     });
   }, [dishes, searchQuery, currentCategory]);
 
-  const cartCount = cart.reduce((sum, item) => sum + item.cantidad, 0);
-  const cartTotal = cart.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
-
-  const addToCart = (dish: Dish) => {
-    setCart((prev) => {
-      const existing = prev.find((i) => i.id_platillo === dish.id_platillo);
-      if (existing) {
-        return prev.map((i) => (i.id_platillo === dish.id_platillo ? { ...i, cantidad: i.cantidad + 1 } : i));
-      }
-      return [...prev, { id_platillo: dish.id_platillo, nombre: dish.nombre, precio: dish.precio, cantidad: 1 }];
-    });
+  const handleAdd = (dish: Dish) => {
+    addToCart(dish);
     toast.success(`${dish.nombre} agregado`, { duration: 1500 });
   };
-
-  const updateQty = (idPlatillo: number, cantidad: number) => {
-    setCart((prev) =>
-      cantidad <= 0
-        ? prev.filter((i) => i.id_platillo !== idPlatillo)
-        : prev.map((i) => (i.id_platillo === idPlatillo ? { ...i, cantidad } : i)),
-    );
-  };
-
-  const removeFromCart = (idPlatillo: number) => setCart((prev) => prev.filter((i) => i.id_platillo !== idPlatillo));
 
   const handleConfirm = () => {
     if (cart.length === 0) {
       toast.error('Tu carrito está vacío');
       return;
     }
-    // El envío del pedido a /v1/pedidos llega en la siguiente fase (mesa + checkout).
-    toast.info('El envío del pedido a cocina se habilita en la siguiente fase.');
+    if (!mesa) {
+      toast.info('Primero elige tu mesa');
+      setCartOpen(false);
+      navigate('/mesa');
+      return;
+    }
+    enviarMutation.mutate(mesa.id_mesa);
   };
 
   if (isLoading) return <MenuSkeleton />;
@@ -78,7 +81,15 @@ export default function MenuPage() {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h1 className="font-heading text-3xl font-bold mb-1">Nuestra Carta</h1>
-          <p className="text-muted-foreground text-sm">Descubre nuestros platos favoritos</p>
+          <p className="text-muted-foreground text-sm flex items-center gap-1.5">
+            {mesa ? (
+              <>
+                <MapPin className="h-3.5 w-3.5" /> Mesa #{mesa.numero} · {mesa.zona}
+              </>
+            ) : (
+              'Descubre nuestros platos favoritos'
+            )}
+          </p>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -199,7 +210,7 @@ export default function MenuPage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => addToCart(dish)}
+                        onClick={() => handleAdd(dish)}
                         className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:brightness-110 transition flex items-center gap-1.5 shadow-sm"
                       >
                         <Plus className="h-4 w-4" /> Agregar
@@ -257,6 +268,7 @@ export default function MenuPage() {
                 <div>
                   <h2 className="font-heading text-xl font-bold">Tu Pedido</h2>
                   <p className="text-xs text-muted-foreground">
+                    {mesa ? `Mesa #${mesa.numero} · ` : ''}
                     {cartCount} producto{cartCount !== 1 ? 's' : ''}
                   </p>
                 </div>
@@ -285,7 +297,9 @@ export default function MenuPage() {
                       >
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{item.nombre}</p>
-                          <p className="text-sm text-primary font-bold mt-0.5">{formatCurrency(item.precio * item.cantidad)}</p>
+                          <p className="text-sm text-primary font-bold mt-0.5">
+                            {formatCurrency(item.precio * item.cantidad)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <button
@@ -316,6 +330,12 @@ export default function MenuPage() {
 
               {cart.length > 0 && (
                 <div className="border-t p-5 space-y-4 bg-card">
+                  {!mesa && (
+                    <div className="rounded-2xl bg-accent/10 text-accent-foreground/90 text-xs px-4 py-3 flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-accent shrink-0" />
+                      Elige tu mesa para enviar el pedido a cocina.
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm text-muted-foreground">
                       <span>Subtotal</span>
@@ -328,7 +348,7 @@ export default function MenuPage() {
                   </div>
                   <div className="flex gap-3">
                     <button
-                      onClick={() => setCart([])}
+                      onClick={clearCart}
                       className="px-4 py-3 rounded-2xl border text-sm font-medium text-muted-foreground hover:text-destructive hover:border-destructive/30 transition"
                     >
                       Vaciar
@@ -337,10 +357,17 @@ export default function MenuPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleConfirm}
-                      className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition flex items-center justify-center gap-2 shadow-md shadow-primary/20"
+                      disabled={enviarMutation.isPending}
+                      className="flex-1 py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition flex items-center justify-center gap-2 shadow-md shadow-primary/20 disabled:opacity-70"
                     >
-                      <Sparkles className="h-4 w-4" />
-                      Confirmar Pedido
+                      {enviarMutation.isPending ? (
+                        <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          {mesa ? 'Confirmar Pedido' : 'Elegir mesa'}
+                        </>
+                      )}
                     </motion.button>
                   </div>
                 </div>

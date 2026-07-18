@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import { App } from '@/App';
 import { AuthProvider } from '@/auth/AuthContext';
+import { OrderProvider } from '@/order/OrderProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,7 +23,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <OrderProvider>
+            <App />
+          </OrderProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

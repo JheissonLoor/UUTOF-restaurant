@@ -8,6 +8,8 @@ import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import MenuPage from '@/pages/MenuPage';
+import MesaPage from '@/pages/MesaPage';
+import OrdersPage from '@/pages/OrdersPage';
 import NotFound from '@/pages/NotFound';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -57,6 +59,22 @@ export function App() {
           element={
             <ProtectedRoute>
               <MenuPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mesa"
+          element={
+            <ProtectedRoute>
+              <MesaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mis-pedidos"
+          element={
+            <ProtectedRoute>
+              <OrdersPage />
             </ProtectedRoute>
           }
         />

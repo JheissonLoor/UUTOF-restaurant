@@ -62,3 +62,68 @@ export interface CartItem {
   precio: number;
   cantidad: number;
 }
+
+// ===== Mesas =====
+export type EstadoMesa = 'libre' | 'ocupada' | 'reservada' | 'lista' | 'limpieza';
+export type ZonaMesa = 'salon' | 'terraza' | 'barra' | 'privado';
+
+export interface MesaPublica {
+  id_mesa: number;
+  numero: number;
+  zona: ZonaMesa;
+  capacidad: number;
+  estado: EstadoMesa;
+}
+
+export interface MesaSession {
+  id_mesa: number;
+  numero: number;
+  zona: ZonaMesa;
+  capacidad: number;
+}
+
+// ===== Pedidos =====
+export type PedidoEstado = 'creado' | 'en_cocina' | 'listo' | 'entregado' | 'pagado' | 'cancelado';
+export type EstadoItem = 'en_cocina' | 'ready' | 'delivered';
+
+export interface PedidoCreateResponse {
+  id_pedido: number;
+  estado: PedidoEstado;
+  total: number;
+  folio: string;
+}
+
+export interface PedidoItem {
+  id_detalle: number;
+  id_platillo: number;
+  nombre: string;
+  qty: number;
+  price: number;
+  nota: string | null;
+  curso: string;
+  estado_item: EstadoItem;
+}
+
+export interface PedidoPublico {
+  id_pedido: number;
+  id_mesa: number;
+  estado: PedidoEstado;
+  comensales: number;
+  total: number;
+  items: PedidoItem[];
+}
+
+export interface CuentaResponse {
+  folio: string;
+  qr_url: string;
+  total: number;
+}
+
+// ===== Pagos =====
+export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo' | 'mixto';
+
+export interface PagoResponse {
+  id_transaccion: number;
+  cambio?: number | null;
+  recibo: Record<string, unknown>;
+}
