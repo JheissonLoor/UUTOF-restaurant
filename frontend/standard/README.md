@@ -11,7 +11,7 @@ A diferencia de los frontends dedicados (`cliente`, `mesero`, `cocina-basico`, `
 | `cliente` | `/menu`, `/mesa`, `/reservar`, `/mis-pedidos` | Carta, mesa, reservas, pedido y pago |
 | `cocina` | `/cocina` | Tablero kanban de pedidos por estado |
 | `mesero` | `/mesero` | Verificación de salida (pagado / pendiente) |
-| `admin` | `/admin` | Dashboard de reportes |
+| `admin` | `/admin` | Dashboard + gestión: menú, mesas, usuarios y configuración |
 
 ## Stack
 

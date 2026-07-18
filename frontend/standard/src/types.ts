@@ -220,6 +220,104 @@ export interface DashboardResponse {
   heatmap_pedidos: number[][];
 }
 
+// ===== Admin CRUD =====
+export interface PlatilloCreate {
+  id_categoria: number;
+  nombre: string;
+  precio: number;
+  disponible: boolean;
+  imagen_url?: string | null;
+}
+
+export interface PlatilloPatch {
+  id_categoria?: number;
+  nombre?: string;
+  precio?: number;
+  disponible?: boolean;
+  imagen_url?: string | null;
+}
+
+export interface UsuarioPublico {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  telefono?: string | null;
+  rol: UserRole;
+  creado_en: string;
+}
+
+export interface UsuariosPage {
+  data: UsuarioPublico[];
+  next_cursor: string | null;
+}
+
+export interface UsuarioCreate {
+  nombre: string;
+  email: string;
+  telefono?: string;
+  password: string;
+  rol: UserRole;
+}
+
+export interface UsuarioPatch {
+  nombre?: string;
+  telefono?: string;
+  rol?: UserRole;
+}
+
+export interface RestauranteConfig {
+  nombre_comercial: string;
+  ruc: string;
+  direccion: string;
+  telefono: string;
+  email: string;
+  timezone: 'America/Lima';
+  moneda: 'PEN';
+  igv_pct: number;
+  horario_apertura: string;
+  horario_cierre: string;
+}
+
+export interface PagosConfig {
+  acepta_efectivo: boolean;
+  acepta_tarjeta: boolean;
+  acepta_yape: boolean;
+  yape_numero: string;
+  pos_proveedor: string;
+  propina_sugerida_pct: number;
+  comprobante_default: 'boleta' | 'factura';
+}
+
+export interface NotificacionesConfig {
+  email_admin: string;
+  email_reservas: boolean;
+  alertas_stock_bajo: boolean;
+  sonido_cocina: boolean;
+  resumen_diario_email: boolean;
+}
+
+export interface SeguridadConfig {
+  sesion_minutos: number;
+  mfa_admin: boolean;
+  intentos_login: number;
+  bloqueo_minutos: number;
+  rotacion_claves_dias: number;
+}
+
+export interface ConfiguracionResponse {
+  restaurante: RestauranteConfig;
+  pagos: PagosConfig;
+  notificaciones: NotificacionesConfig;
+  seguridad: SeguridadConfig;
+}
+
+export interface ConfiguracionPatch {
+  restaurante?: Partial<RestauranteConfig>;
+  pagos?: Partial<PagosConfig>;
+  notificaciones?: Partial<NotificacionesConfig>;
+  seguridad?: Partial<SeguridadConfig>;
+}
+
 // ===== Cocina / Mesero (paneles de staff) =====
 export type EstadoCocina = 'espera' | 'cocina' | 'listo' | 'entregado' | 'pagado';
 export type PedidoTransition = 'empezarPreparacion' | 'marcarTerminado' | 'entregarMesa';
