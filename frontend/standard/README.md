@@ -22,11 +22,11 @@ A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orie
 - Envío de pedido a cocina (`/v1/pedidos`) desde el carrito.
 - Seguimiento del pedido con tracker de estado (recibido → cocina → listo → entregado → pagado), con polling automático.
 - Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo, mixto) + reseña (`/v1/resenas`).
+- Reservas (`/v1/reservas`): formulario con mesa/fecha/hora/personas/notas y listado de reservas del día.
+- Seguimiento del pedido en tiempo real por **WebSocket** (con reconexión automática y polling de respaldo).
 
 ### Pendiente (siguientes fases)
 
-- Reservas (`/v1/reservas`).
-- Seguimiento del pedido por WebSocket (reemplazando el polling).
 - Panel admin (dashboard/ventas desde `/v1/reportes`).
 
 ## Configuración

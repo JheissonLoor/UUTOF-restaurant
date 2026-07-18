@@ -9,6 +9,7 @@ import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
 import MenuPage from '@/pages/MenuPage';
 import MesaPage from '@/pages/MesaPage';
+import ReservaPage from '@/pages/ReservaPage';
 import OrdersPage from '@/pages/OrdersPage';
 import NotFound from '@/pages/NotFound';
 
@@ -67,6 +68,14 @@ export function App() {
           element={
             <ProtectedRoute>
               <MesaPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reservar"
+          element={
+            <ProtectedRoute>
+              <ReservaPage />
             </ProtectedRoute>
           }
         />

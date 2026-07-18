@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 const links = [
   { to: '/menu', label: 'Carta' },
   { to: '/mesa', label: 'Mesa' },
+  { to: '/reservar', label: 'Reservar' },
   { to: '/mis-pedidos', label: 'Mis Pedidos' },
 ];
 

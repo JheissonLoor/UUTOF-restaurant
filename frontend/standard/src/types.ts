@@ -127,3 +127,31 @@ export interface PagoResponse {
   cambio?: number | null;
   recibo: Record<string, unknown>;
 }
+
+// ===== Reservas =====
+export interface ReservaPublica {
+  id_reserva: number;
+  id_usuario?: number | null;
+  nombre_cliente: string;
+  id_mesa: number;
+  hora_reserva: string;
+  num_personas: number;
+  notas_especiales?: string | null;
+}
+
+export interface ReservaCreateRequest {
+  id_mesa: number;
+  hora_reserva: string;
+  num_personas: number;
+  notas?: string;
+}
+
+// ===== Eventos WebSocket =====
+export type WSEvent =
+  | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }
+  | { tipo: 'pedido.listo'; id_pedido: number }
+  | { tipo: 'pedido.entregado'; id_pedido: number }
+  | { tipo: 'pedido.pagado_app'; id_pedido: number; id_mesa?: number }
+  | { tipo: 'pago.verificado'; id_pedido: number }
+  | { tipo: 'pedido.items_agregados'; id_pedido: number; id_mesa: number }
+  | { tipo: 'pong' };
