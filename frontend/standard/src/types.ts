@@ -146,6 +146,73 @@ export interface ReservaCreateRequest {
   notas?: string;
 }
 
+// ===== Dashboard (admin) =====
+export interface DashboardHoy {
+  ingresos: number;
+  ingresos_ayer: number;
+  pedidos: number;
+  pedidos_ayer: number;
+  mesas_ocupadas: number;
+  mesas_totales: number;
+  ticket_promedio: number;
+  ticket_promedio_ayer: number;
+  pedidos_pendientes: number;
+}
+
+export interface DistribucionPedido {
+  key: string;
+  label: string;
+  count: number;
+}
+
+export interface DashboardIngresosPorDia {
+  labels: string[];
+  esta_semana: number[];
+  semana_anterior: number[];
+}
+
+export interface TopPlatilloDashboard {
+  id_platillo: number;
+  nombre: string;
+  categoria: string | null;
+  cantidad: number;
+  pct: number;
+}
+
+export interface ActividadReciente {
+  type: string;
+  who: string;
+  what: string;
+  when: string;
+  actor: string;
+}
+
+export interface AlertaDashboard {
+  level: string;
+  title: string;
+  sub: string;
+  accionable?: boolean | null;
+  accion_url?: string | null;
+}
+
+export interface PagoPorTipo {
+  name: string;
+  sub: string;
+  amount: number;
+  pct: number;
+}
+
+export interface DashboardResponse {
+  hoy: DashboardHoy;
+  distribucion: DistribucionPedido[];
+  ingresos_por_dia: DashboardIngresosPorDia;
+  top_platillos: TopPlatilloDashboard[];
+  actividad: ActividadReciente[];
+  alertas: AlertaDashboard[];
+  pagos_por_tipo: PagoPorTipo[];
+  heatmap_pedidos: number[][];
+}
+
 // ===== Eventos WebSocket =====
 export type WSEvent =
   | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }

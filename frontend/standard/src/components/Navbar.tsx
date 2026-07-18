@@ -17,6 +17,8 @@ export default function Navbar() {
   const { cartCount } = useOrder();
   const navigate = useNavigate();
 
+  const navLinks = user?.rol === 'admin' ? [...links, { to: '/admin', label: 'Admin' }] : links;
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -37,7 +39,7 @@ export default function Navbar() {
 
         {isAuthenticated && (
           <nav className="flex items-center gap-1 sm:gap-2">
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}

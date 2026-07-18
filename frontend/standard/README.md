@@ -24,10 +24,13 @@ A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orie
 - Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo, mixto) + reseña (`/v1/resenas`).
 - Reservas (`/v1/reservas`): formulario con mesa/fecha/hora/personas/notas y listado de reservas del día.
 - Seguimiento del pedido en tiempo real por **WebSocket** (con reconexión automática y polling de respaldo).
+- Panel de administración (solo rol `admin`) con dashboard desde `/v1/reportes/dashboard`: KPIs del día (ingresos, pedidos, ocupación, ticket promedio) con variación vs. ayer, ingresos por día, pedidos por estado, top platillos, pagos por tipo, alertas y actividad reciente.
 
-### Pendiente (siguientes fases)
+### Ideas para más adelante
 
-- Panel admin (dashboard/ventas desde `/v1/reportes`).
+- Reporte de ventas por rango (`/v1/reportes/ventas`) con exportación.
+- CRUD de menú/mesas desde el panel admin (`/v1/menu`, `/v1/mesas`).
+- Edición de configuración del restaurante (`/v1/configuracion`).
 
 ## Configuración
 

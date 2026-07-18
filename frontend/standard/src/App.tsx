@@ -11,11 +11,14 @@ import MenuPage from '@/pages/MenuPage';
 import MesaPage from '@/pages/MesaPage';
 import ReservaPage from '@/pages/ReservaPage';
 import OrdersPage from '@/pages/OrdersPage';
+import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
+import type { UserRole } from '@/types';
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+function ProtectedRoute({ children, role }: { children: ReactNode; role?: UserRole }) {
+  const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (role && user?.rol !== role) return <Navigate to="/menu" replace />;
   return <>{children}</>;
 }
 
@@ -84,6 +87,14 @@ export function App() {
           element={
             <ProtectedRoute>
               <OrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminPage />
             </ProtectedRoute>
           }
         />
