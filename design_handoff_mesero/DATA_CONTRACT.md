@@ -101,15 +101,6 @@ Transiciones de la máquina de estados.
 ### PATCH `/v1/pedidos/{id}/items/{id_detalle}/entregar`
 Marca un ítem específico como entregado.
 
-### POST `/v1/pedidos/{id}/llamar-cocina`
-Notifica al KDS mediante el bus realtime.
-```ts
-// response
-{ ok: true }
-// evento emitido
-{ tipo: "pedido.llamar_cocina"; id_pedido: number; id_mesa: number }
-```
-
 ---
 
 ## 💳 Pagos

@@ -3,15 +3,17 @@ import { ArrowLeft, Check, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { getErrorDetail } from '@/api/errors';
-import { registrarPago } from '@/api/pagos';
-import { entregarPedidoItem, getPedido, llamarCocina } from '@/api/pedidos';
+import { getPagosPendientes, registrarPago, verificarPagoEfectivo } from '@/api/pagos';
+import { entregarPedidoItem, generarCuenta, getPedido, llamarCocina } from '@/api/pedidos';
 import { DetailFooter } from '@/components/DetailFooter';
 import { OrderCard } from '@/components/OrderCard';
 import { OrderItem } from '@/components/OrderItem';
 import { PaySuccess } from '@/components/PaySuccess';
 import { QuickActions } from '@/components/QuickActions';
+import { CashVerificationSheet } from '@/components/sheets/CashVerificationSheet';
+import { CuentaQrSheet } from '@/components/sheets/CuentaQrSheet';
 import { PaySheet } from '@/components/sheets/PaySheet';
-import type { Mesa, MetodoPago, PedidoItem } from '@/types/api';
+import type { CuentaResponse, Mesa, MetodoPago, PedidoItem } from '@/types/api';
 
 interface MesaDetailProps {
   mesa: Mesa;
@@ -31,6 +33,9 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
   const queryClient = useQueryClient();
   const [toast, setToast] = useState<string | null>(null);
   const [isPayOpen, setIsPayOpen] = useState(false);
+  const [isVerifyOpen, setIsVerifyOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
+  const [cuenta, setCuenta] = useState<CuentaResponse | null>(null);
   const [showPaySuccess, setShowPaySuccess] = useState(false);
   const idPedido = mesa.pedido_activo?.id_pedido;
 
@@ -40,6 +45,15 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
     enabled: typeof idPedido === 'number',
     refetchInterval: 15000,
   });
+
+  const pagosPendientesQuery = useQuery({
+    queryKey: ['pagos', 'pendientes'],
+    queryFn: getPagosPendientes,
+    enabled: pedidoQuery.data?.pago_estado === 'pendiente',
+    refetchInterval: 15000,
+  });
+
+  const pagoPendiente = pagosPendientesQuery.data?.find((pago) => pago.id_pedido === idPedido) ?? null;
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -65,6 +79,15 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
     onError: (error) => setToast(getErrorDetail(error, 'No se pudo contactar a cocina')),
   });
 
+  const qrMutation = useMutation({
+    mutationFn: () => generarCuenta(idPedido as number),
+    onSuccess: (nextCuenta) => {
+      setCuenta(nextCuenta);
+      setIsQrOpen(true);
+    },
+    onError: (error) => setToast(getErrorDetail(error, 'No se pudo generar la cuenta QR')),
+  });
+
   const payMutation = useMutation({
     mutationFn: ({ metodo, propina, recibido }: { metodo: MetodoPago; propina: number; recibido?: number }) => {
       if (!pedidoQuery.data) throw new Error('Pedido no cargado');
@@ -84,6 +107,21 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
     onError: (error) => setToast(getErrorDetail(error, 'No se pudo registrar el pago')),
   });
 
+  const verifyMutation = useMutation({
+    mutationFn: (recibido: number) => {
+      if (!pagoPendiente) throw new Error('No se encontró el pago pendiente');
+      return verificarPagoEfectivo(pagoPendiente.id_transaccion, recibido);
+    },
+    onSuccess: () => {
+      setIsVerifyOpen(false);
+      setShowPaySuccess(true);
+      void queryClient.invalidateQueries({ queryKey: ['pagos', 'pendientes'] });
+      void queryClient.invalidateQueries({ queryKey: ['mesas', 'mesero'] });
+      void queryClient.invalidateQueries({ queryKey: ['pedido', idPedido] });
+    },
+    onError: (error) => setToast(getErrorDetail(error, 'No se pudo verificar el efectivo')),
+  });
+
   const summary = useMemo(() => {
     const items = pedidoQuery.data?.items ?? [];
     return {
@@ -98,6 +136,7 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
 
   const subtitle = `${mesa.zona ? zoneLabels[mesa.zona] : 'Sin zona'} - ${mesa.pedido_activo?.comensales ?? 0} comensales - ${mesa.pedido_activo?.minutos ?? 0} min`;
   const puedeCobrar = pedidoQuery.data?.estado === 'listo' || pedidoQuery.data?.estado === 'entregado';
+  const esperaVerificacion = pedidoQuery.data?.pago_estado === 'pendiente';
 
   return (
     <main className="relative flex h-[100dvh] flex-col overflow-hidden bg-cream-50 text-ink-900" data-screen-label="02 Detalle">
@@ -142,6 +181,8 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
             <QuickActions
               onCallKitchen={() => callKitchenMutation.mutate()}
               isCallingKitchen={callKitchenMutation.isPending}
+              onQr={() => qrMutation.mutate()}
+              isGeneratingQr={qrMutation.isPending}
             />
 
             <div className="flex items-center justify-between gap-3 pt-1">
@@ -165,7 +206,15 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
         ) : null}
       </section>
 
-      <DetailFooter onAddDishes={onAddDishes} onCharge={puedeCobrar ? () => setIsPayOpen(true) : undefined} />
+      <DetailFooter
+        onAddDishes={esperaVerificacion ? undefined : onAddDishes}
+        onCharge={esperaVerificacion && pagoPendiente
+          ? () => setIsVerifyOpen(true)
+          : puedeCobrar
+            ? () => setIsPayOpen(true)
+            : undefined}
+        chargeLabel={esperaVerificacion ? 'Verificar efectivo' : 'Cobrar cuenta'}
+      />
 
       <PaySheet
         open={isPayOpen}
@@ -174,6 +223,16 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
         onClose={() => setIsPayOpen(false)}
         onConfirm={(payload) => payMutation.mutate(payload)}
       />
+
+      <CashVerificationSheet
+        open={isVerifyOpen}
+        pago={pagoPendiente}
+        isSubmitting={verifyMutation.isPending}
+        onClose={() => setIsVerifyOpen(false)}
+        onConfirm={(recibido) => verifyMutation.mutate(recibido)}
+      />
+
+      <CuentaQrSheet open={isQrOpen} cuenta={cuenta} onClose={() => setIsQrOpen(false)} />
 
       <PaySuccess open={showPaySuccess} onDone={onPaid} />
 

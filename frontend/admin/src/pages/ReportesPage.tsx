@@ -5,7 +5,6 @@ import { type FormEvent, useMemo, useState } from 'react';
 
 import { getErrorDetail } from '@/api/errors';
 import { getVentasReporte, type ReporteGranularidad } from '@/api/reportes';
-import { ExportPDFButton } from '@/components/reportes/ExportPDFButton';
 import { ReportTrendChart } from '@/components/reportes/ReportTrendChart';
 import { TopPlatillosReportChart } from '@/components/reportes/TopPlatillosReportChart';
 import { Button } from '@/components/ui/Button';
@@ -86,7 +85,6 @@ export function ReportesPage(): JSX.Element {
     setFilters(draftFilters);
   }
 
-  const hasReportData = Boolean(data && (data.ingresos_por_periodo.length > 0 || data.top_platillos.length > 0));
   const rangeLabel = `${filters.from} al ${filters.to}`;
 
   return (
@@ -112,12 +110,11 @@ export function ReportesPage(): JSX.Element {
             ) : null}
           </div>
         </div>
-        <div className="no-print flex flex-wrap gap-3">
+        <div className="no-print">
           <Button type="button" variant="ghost" loading={ventasQuery.isFetching} onClick={() => void ventasQuery.refetch()}>
             <RefreshCw aria-hidden="true" size={15} strokeWidth={1.8} />
             Actualizar
           </Button>
-          <ExportPDFButton disabled={!hasReportData} />
         </div>
       </div>
 

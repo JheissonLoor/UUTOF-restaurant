@@ -3,7 +3,6 @@
 > Endpoints que el frontend del Panel Admin consume y sus tipos TypeScript.
 > Base URL: `http://localhost:8000/v1` en desarrollo.
 > Todos los endpoints (excepto `/auth/*`) requieren header `Authorization: Bearer <jwt>`.
-> Los montos están expresados en Soles (`PEN`) y el frontend los presenta con locale `es-PE` y símbolo `S/`.
 
 ---
 
@@ -231,40 +230,6 @@ Array<{
 }
 ```
 
-### POST `/v1/usuarios`
-
-**Permisos:** `admin`.
-
-**Request:**
-```ts
-{
-  nombre: string;
-  email: string;
-  telefono: string | null;
-  password: string;
-  rol: "cliente" | "mesero" | "cocina" | "admin";
-}
-```
-
-**Response 201:** el usuario creado con el mismo tipo publico del listado.
-
-### PATCH `/v1/usuarios/:id`
-
-**Permisos:** dueno del usuario o `admin`. El campo `rol` solo puede cambiarlo un administrador.
-
-**Request:**
-```ts
-{
-  nombre?: string;
-  telefono?: string | null;
-  rol?: "cliente" | "mesero" | "cocina" | "admin";
-}
-```
-
-**Response 200:** el usuario actualizado con el mismo tipo publico del listado.
-
-> Nota: el esquema oficial actual no incluye una columna para activar o desactivar usuarios. Esa accion queda fuera de alcance hasta definir el cambio de base de datos.
-
 ---
 
 ## 📈 Reportes (vista detallada)
@@ -278,70 +243,9 @@ Array<{
   pedidos_total: number;
   ticket_promedio: number;
   ingresos_por_periodo: Array<{ periodo: string; monto: number }>;
-  pedidos_por_periodo: Array<{ periodo: string; cantidad: number }>;
-  ticket_promedio_por_periodo: Array<{ periodo: string; monto: number }>;
   top_platillos: Array<{ id_platillo: number; nombre: string; cantidad: number; ingresos: number }>;
 }
 ```
-
----
-
-## Configuracion
-
-### GET `/v1/configuracion`
-
-Permisos: `admin`.
-
-**Response 200:**
-```ts
-{
-  restaurante: {
-    nombre_comercial: string;
-    ruc: string;
-    direccion: string;
-    telefono: string;
-    email: string;
-    timezone: "America/Lima";
-    moneda: "PEN";
-    igv_pct: number;
-    horario_apertura: string;
-    horario_cierre: string;
-  };
-  pagos: {
-    acepta_efectivo: boolean;
-    acepta_tarjeta: boolean;
-    acepta_yape: boolean;
-    yape_numero: string;
-    pos_proveedor: string;
-    propina_sugerida_pct: number;
-    comprobante_default: "boleta" | "factura";
-  };
-  notificaciones: {
-    email_admin: string;
-    email_reservas: boolean;
-    alertas_stock_bajo: boolean;
-    sonido_cocina: boolean;
-    resumen_diario_email: boolean;
-  };
-  seguridad: {
-    sesion_minutos: number;
-    mfa_admin: boolean;
-    intentos_login: number;
-    bloqueo_minutos: number;
-    rotacion_claves_dias: number;
-  };
-}
-```
-
-### PATCH `/v1/configuracion`
-
-Permisos: `admin`.
-
-**Request:** mismo shape de `GET`, completo o parcial por seccion.
-
-**Response 200:** configuracion actualizada.
-
-> Persistencia actual: archivo local `backend/storage/configuracion.json`, ignorado por Git. No se agregaron tablas porque el modelo oficial de BD aun no define configuracion.
 
 ---
 
@@ -364,7 +268,7 @@ Todas las respuestas de error siguen este formato:
 Ejemplo:
 ```json
 {
-  "type": "https://uttof.pe/errors/validation",
+  "type": "https://uttof.mx/errors/validation",
   "title": "Datos inválidos",
   "status": 422,
   "detail": "El campo precio debe ser mayor o igual a 0",

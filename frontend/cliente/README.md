@@ -1,32 +1,33 @@
-# React + TypeScript + Vite
+# UTTOF Cliente - Operación Pro
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación móvil web para el comensal de UTTOF. Permite ingresar a una mesa, consultar la carta, enviar un pedido directo a cocina, seguir su estado y completar el checkout postpago.
 
-Currently, two official plugins are available:
+## Funciones
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Autenticación JWT con renovación automática.
+- Entrada walk-in por mesa con confirmación manual o simulación de QR.
+- Carta conectada al backend, carrito persistente y notas por platillo.
+- Pedido directo a cocina y seguimiento por WebSocket con respaldo por polling.
+- Pago en tarjeta, Yape o efectivo; el efectivo queda pendiente de verificación por el mesero.
+- Reservas y reseña posterior al pago.
+- Formato peruano, moneda PEN y precios en `S/`.
 
-## React Compiler
+El pago dividido, fidelización y pedidos programados pertenecen al plan Multi-local y no se muestran en esta aplicación Pro. La lectura de QR con cámara se incorporará al completar los tres planes.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Ejecutar
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm.cmd install
+npm.cmd run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+URL: `http://127.0.0.1:5176`
+
+Credenciales: `cliente@uttof.pe` / `cliente123`
+
+## Validar
+
+```powershell
+npm.cmd run lint
+npm.cmd run build
+```

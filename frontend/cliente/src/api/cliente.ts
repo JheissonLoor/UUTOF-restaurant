@@ -7,7 +7,6 @@ import type {
   MesaSession,
   MetodoPago,
   PagoResponse,
-  PagoParte,
   PedidoCreateResponse,
   PedidoPublico,
   PlatillosPage,
@@ -85,14 +84,12 @@ export async function registrarPago(
   metodo: MetodoPago,
   monto: number,
   propina: number,
-  desglose?: PagoParte[],
 ): Promise<PagoResponse> {
   const response = await apiClient.post<PagoResponse>('/pagos', {
     id_pedido: idPedido,
     metodo,
     monto,
     propina,
-    desglose,
   });
   return response.data;
 }

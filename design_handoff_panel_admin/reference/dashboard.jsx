@@ -84,9 +84,9 @@ const StatCard = ({ label, value, unit, icon: Ico, iconVariant, delta, deltaLabe
       <div>
         <div className="stat-label">{label}</div>
         <div className="stat-value">
-          {unit === "S/" && <span className="unit">S/</span>}
+          {unit === "$" && <span className="unit">$</span>}
           <span>{value}</span>
-          {unit && unit !== "S/" && <span className="unit">{unit}</span>}
+          {unit && unit !== "$" && <span className="unit">{unit}</span>}
         </div>
       </div>
       <div className={`stat-icon ${iconVariant}`}>
@@ -123,8 +123,8 @@ const StatCards = () => {
   return (
     <div className="grid grid-4">
       <StatCard
-        label="Ingresos hoy" value={fmtPEN(d.ingresos)} unit="S/"
-        icon={IconCash} iconVariant="green"
+        label="Ingresos hoy" value={fmt$(d.ingresos)} unit="$"
+        icon={IconDollar} iconVariant="green"
         delta={ingresosDelta} deltaLabel="vs. ayer"
         spark={s1} sparkColor="var(--sage-500)" sparkFill="var(--sage-100)"
       />
@@ -142,7 +142,7 @@ const StatCards = () => {
         spark={s3} sparkColor="var(--terracotta-500)" sparkFill="var(--terracotta-100)"
       />
       <StatCard
-        label="Ticket promedio" value={fmtPEN(d.ticketPromedio)} unit="S/"
+        label="Ticket promedio" value={fmt$(d.ticketPromedio)} unit="$"
         icon={IconTrendUp} iconVariant="saffron"
         delta={ticketDelta} deltaLabel="vs. ayer"
         spark={s4} sparkColor="var(--saffron-500)" sparkFill="var(--saffron-100)"
@@ -162,8 +162,8 @@ const RevenueChart = () => {
           <h3>Ingresos · últimos 14 días</h3>
           <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: 10 }}>
             <div className="revenue-hero">
-              <span className="currency serif">S/</span>
-              <span className="big serif">{fmtPEN(total)}</span>
+              <span className="currency serif">$</span>
+              <span className="big serif">{fmt$(total)}</span>
             </div>
             <span className="delta up"><IconArrowUp size={11}/>12.4%</span>
             <span style={{ fontSize: 12.5, color: "var(--ink-500)" }}>vs. período anterior</span>
@@ -259,7 +259,7 @@ const MesasMap = () => {
                 <div className="status">{cfg.label}</div>
                 {m.guests && (
                   <div className="guests">
-                    <IconUsers size={10}/> {m.guests} · S/ {m.ticket || "—"}
+                    <IconUsers size={10}/> {m.guests} · ${m.ticket || "—"}
                   </div>
                 )}
               </div>
@@ -274,7 +274,7 @@ const MesasMap = () => {
 // ================= Actividad =================
 const FEED_CFG = {
   order:   { bg: "var(--terracotta-50)", color: "var(--terracotta-500)", icon: IconReceipt },
-  pay:     { bg: "var(--sage-100)",      color: "var(--sage-500)",       icon: IconCash },
+  pay:     { bg: "var(--sage-100)",      color: "var(--sage-500)",       icon: IconDollar },
   ready:   { bg: "var(--sky-100)",       color: "var(--sky-500)",        icon: IconCheck },
   reserve: { bg: "var(--saffron-100)",   color: "var(--saffron-500)",    icon: IconCalendar },
   review:  { bg: "var(--wine-100)",      color: "var(--wine-500)",       icon: IconStar },
@@ -374,7 +374,7 @@ const MetodosPago = () => {
     <div className="card">
       <div className="card-head">
         <h3>Métodos de Pago</h3>
-        <span className="meta tnum">S/ {fmtPEN(total)} total</span>
+        <span className="meta tnum">${fmt$(total)} total</span>
       </div>
       <div>
         {DATA.pagos.map(p => {
@@ -391,7 +391,7 @@ const MetodosPago = () => {
                 </div>
               </div>
               <div className="pay-right">
-                <div className="pay-amount tnum">S/ {fmtPEN(p.amount)}</div>
+                <div className="pay-amount tnum">${fmt$(p.amount)}</div>
                 <div className="pay-pct">{p.pct}% del total</div>
               </div>
             </div>

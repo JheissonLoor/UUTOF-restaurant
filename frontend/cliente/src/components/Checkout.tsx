@@ -4,13 +4,12 @@ import { crearResena, pedirCuenta, registrarPago } from '@/api/cliente';
 import { getErrorDetail } from '@/api/errors';
 import { CheckIcon, CloseIcon, SparkIcon } from '@/components/icons';
 import { formatCurrency, formatOrderFolio } from '@/lib/format';
-import type { MetodoPago, PagoParte, PedidoPublico } from '@/types';
+import type { MetodoPago, PedidoPublico } from '@/types';
 
 const methods: Array<{ id: MetodoPago; label: string; detail: string }> = [
   { id: 'tarjeta', label: 'Tarjeta', detail: 'Crédito o débito' },
   { id: 'yape', label: 'Yape / QR', detail: 'Escanea y confirma' },
   { id: 'efectivo', label: 'Efectivo', detail: 'Paga al mesero' },
-  { id: 'mixto', label: 'Mixto', detail: 'Combinar métodos' },
 ];
 
 export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublico | null; onClose: () => void; onFinished: () => void }): JSX.Element | null {
@@ -21,7 +20,6 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [rating, setRating] = useState(5);
-  const [mixedYape, setMixedYape] = useState(0);
 
   useEffect(() => {
     if (!pedido) return;
@@ -37,10 +35,6 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
   const tip = useMemo(() => Math.round((pedido?.total ?? 0) * tipPct) / 100, [pedido?.total, tipPct]);
   const total = (pedido?.total ?? 0) + tip;
 
-  useEffect(() => {
-    setMixedYape(Number((total / 2).toFixed(2)));
-  }, [total]);
-
   if (!pedido) return null;
   const activePedido = pedido;
 
@@ -48,15 +42,7 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
     setError(null);
     setIsProcessing(true);
     try {
-      let desglose: PagoParte[] | undefined;
-      if (method === 'mixto') {
-        const yape = Math.min(Math.max(mixedYape, 0.01), total - 0.01);
-        desglose = [
-          { metodo: 'yape', monto: Number(yape.toFixed(2)) },
-          { metodo: 'tarjeta', monto: Number((total - yape).toFixed(2)) },
-        ];
-      }
-      await registrarPago(activePedido.id_pedido, method, activePedido.total, tip, desglose);
+      await registrarPago(activePedido.id_pedido, method, activePedido.total, tip);
       setStep('success');
     } catch (payError) {
       setError(getErrorDetail(payError, 'No se pudo procesar el pago.'));
@@ -158,25 +144,6 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
               ) : null}
 
               {method === 'efectivo' ? <div className="mt-4 rounded-md bg-sun-50 px-4 py-3 text-sm text-sun-600">El mesero verificará la recepción del efectivo desde su app.</div> : null}
-              {method === 'mixto' ? (
-                <div className="mt-4 rounded-xl bg-cream-bg p-4">
-                  <label className="text-xs font-semibold text-ink-500" htmlFor="cliente-mixed-yape">Monto por Yape</label>
-                  <input
-                    id="cliente-mixed-yape"
-                    type="number"
-                    min="0.01"
-                    max={Math.max(total - 0.01, 0.01)}
-                    step="0.01"
-                    value={mixedYape}
-                    onChange={(event) => setMixedYape(Number(event.target.value))}
-                    className="mt-2 min-h-11 w-full rounded-md border border-[rgba(31,26,20,0.15)] bg-white px-3"
-                  />
-                  <div className="mt-3 flex justify-between text-sm text-ink-700">
-                    <span>Resto por tarjeta</span>
-                    <strong>{formatCurrency(Math.max(total - mixedYape, 0))}</strong>
-                  </div>
-                </div>
-              ) : null}
               {error ? <div className="mt-4 rounded-md bg-coral-50 px-4 py-3 text-sm text-coral-600">{error}</div> : null}
 
               <button type="button" disabled={isProcessing} className="mt-4 min-h-12 w-full rounded-md bg-coral px-4 text-sm font-semibold text-white disabled:opacity-60" onClick={() => void handlePay()}>

@@ -421,8 +421,6 @@ export function ConfigPage(): JSX.Element {
               <TextField register={register} errors={errors} name="notificaciones.email_admin" label="Email de alertas" type="email" />
               <div className="space-y-3 lg:row-span-2">
                 <ToggleField register={register} name="notificaciones.email_reservas" title="Reservas por email" description="Enviar avisos cuando se registren reservas." />
-                <ToggleField register={register} name="notificaciones.alertas_stock_bajo" title="Stock bajo" description="Avisar cuando un insumo baje del umbral operativo." />
-                <ToggleField register={register} name="notificaciones.sonido_cocina" title="Sonido en cocina" description="Reproducir alerta para nuevos pedidos del KDS." />
                 <ToggleField register={register} name="notificaciones.resumen_diario_email" title="Resumen diario" description="Enviar cierre operativo al email administrador." />
               </div>
             </div>

@@ -159,8 +159,6 @@
 
 - Tabla con: avatar + nombre + email + rol + estado (activo/inactivo) + acciones
 - Filtro por rol
-
-> Pendiente de contrato: el estado activo/inactivo se incorporara cuando el esquema oficial defina su columna y reglas de negocio.
 - Botón "+ Nuevo usuario" → modal con form
 
 ---

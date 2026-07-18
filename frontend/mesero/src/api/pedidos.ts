@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client';
-import type { Pedido, PedidoItemWrite } from '@/types/api';
+import type { CuentaResponse, Pedido, PedidoItemWrite } from '@/types/api';
 
 export async function getPedido(idPedido: number): Promise<Pedido> {
   const response = await apiClient.get<Pedido>(`/pedidos/${idPedido}`);
@@ -16,8 +16,8 @@ export async function entregarPedidoItem(idPedido: number, idDetalle: number): P
   return response.data;
 }
 
-export async function generarCuenta(idPedido: number): Promise<{ folio: string; qr_url: string; total: number }> {
-  const response = await apiClient.post<{ folio: string; qr_url: string; total: number }>(`/pedidos/${idPedido}/cuenta`);
+export async function generarCuenta(idPedido: number): Promise<CuentaResponse> {
+  const response = await apiClient.post<CuentaResponse>(`/pedidos/${idPedido}/cuenta`);
   return response.data;
 }
 

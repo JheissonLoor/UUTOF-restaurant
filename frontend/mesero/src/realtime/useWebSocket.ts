@@ -31,6 +31,7 @@ export function useWebSocket({ onEvent }: UseWebSocketOptions): void {
 
     const wsBase = import.meta.env.VITE_WS_URL ?? 'ws://127.0.0.1:8000/ws';
     let socket: WebSocket | null = null;
+    let connectTimer: number | undefined;
     let retryTimer: number | undefined;
     let disposed = false;
 
@@ -51,9 +52,10 @@ export function useWebSocket({ onEvent }: UseWebSocketOptions): void {
       });
     }
 
-    connect();
+    connectTimer = window.setTimeout(connect, 0);
     return () => {
       disposed = true;
+      if (connectTimer) window.clearTimeout(connectTimer);
       if (retryTimer) window.clearTimeout(retryTimer);
       socket?.close();
     };

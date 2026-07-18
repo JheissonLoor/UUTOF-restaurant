@@ -22,7 +22,7 @@ const DATA = {
     { key: "cancelado",  label: "Cancelado",      count: 1,  color: "var(--ink-400)" },
   ],
 
-  // Revenue over last 14 days (PEN)
+  // Revenue over last 14 days (MXN)
   revenue14: {
     labels: ["10","11","12","13","14","15","16","17","18","19","20","21","22","hoy"],
     thisWeek: [12800, 11400, 13600, 15200, 18900, 21400, 17200, 14100, 12900, 15600, 16800, 19400, 22100, 18420],
@@ -30,12 +30,12 @@ const DATA = {
   },
 
   topPlatillos: [
-    { name: "Lomo saltado",        cat: "Platos de fondo", count: 34, pct: 1.0 },
-    { name: "Ají de gallina",      cat: "Platos de fondo", count: 28, pct: 0.82 },
-    { name: "Causa limeña",        cat: "Entradas",        count: 21, pct: 0.62 },
-    { name: "Arroz con mariscos",  cat: "Platos de fondo", count: 19, pct: 0.56 },
-    { name: "Anticuchos",          cat: "Entradas",        count: 15, pct: 0.44 },
-    { name: "Suspiro a la limeña", cat: "Postres",         count: 12, pct: 0.35 },
+    { name: "Tacos al Pastor",     cat: "Platos fuertes", count: 34, pct: 1.0 },
+    { name: "Mole Poblano",        cat: "Especialidades", count: 28, pct: 0.82 },
+    { name: "Aguachile Verde",     cat: "Entradas",       count: 21, pct: 0.62 },
+    { name: "Enchiladas Suizas",   cat: "Platos fuertes", count: 19, pct: 0.56 },
+    { name: "Chiles en Nogada",    cat: "Especialidades", count: 15, pct: 0.44 },
+    { name: "Flan Napolitano",     cat: "Postres",        count: 12, pct: 0.35 },
   ],
 
   mesas: [
@@ -55,7 +55,7 @@ const DATA = {
 
   actividad: [
     { type: "order",  who: "Mesa 5",  what: "nuevo pedido — 3 platillos", when: "hace 2 min", actor: "MP" },
-    { type: "pay",    who: "Mesa 3",  what: "pagó S/ 820 con tarjeta",     when: "hace 4 min", actor: "CR" },
+    { type: "pay",    who: "Mesa 3",  what: "pagó $820 con tarjeta",       when: "hace 4 min", actor: "CR" },
     { type: "ready",  who: "Cocina",  what: "terminó pedido #0124",         when: "hace 7 min", actor: "JL" },
     { type: "reserve",who: "Reserva", what: "Familia Ruiz — 6 personas · 19:30", when: "hace 12 min", actor: "AN" },
     { type: "review", who: "Reseña",  what: "Sofía dejó una reseña ★★★★★", when: "hace 18 min", actor: "SF" },
@@ -64,7 +64,7 @@ const DATA = {
 
   alertas: [
     { level: "urgent", title: "Mesa 11 lleva 1h 38m sin actualizarse", sub: "Considera revisar el estado del pedido" },
-    { level: "warn",   title: "Stock bajo: Palta (3 kg restantes)", sub: "Rendimiento aprox. 4 horas" },
+    { level: "warn",   title: "Stock bajo: Aguacate (3 kg restantes)", sub: "Rendimiento aprox. 4 horas" },
     { level: "warn",   title: "2 pedidos con falta de pago > 30 min",  sub: "Mesas 5 y 9" },
   ],
 

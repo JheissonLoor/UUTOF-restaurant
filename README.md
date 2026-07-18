@@ -45,12 +45,13 @@ frontend/
   cliente/
   kds/
   mesero/
-  cocina-basico/
+  cocina/
 
 docs/
   arquitectura.html
 
 design_handoff_cocina_basico/
+design_handoff_cocina_pro/
 design_handoff_cliente/
 design_handoff_kds/
 design_handoff_mesero/
@@ -64,10 +65,10 @@ UTTOF se organiza en tres niveles comerciales. Todos comparten el mismo backend,
 | Plan | Precio de referencia | Experiencia | Implementacion actual |
 | --- | ---: | --- | --- |
 | Estandar | S/ 99 | Una sola aplicacion para Cliente, Verificador, Cocina y Admin | `frontend/standard` |
-| Operacion Pro | S/ 249 | Aplicaciones dedicadas para cada area operativa | `frontend/admin`, `frontend/mesero`, `frontend/cliente`, `frontend/cocina-basico` |
+| Operacion Pro | S/ 249 | Aplicaciones dedicadas para cada area operativa | `frontend/admin`, `frontend/mesero`, `frontend/cliente`, `frontend/cocina` |
 | Multi-local | S/ 599 | Operacion avanzada, tiempo real y administracion de varias sedes | `frontend/kds` como primer modulo premium |
 
-La carpeta `cocina-basico` conserva su nombre historico para evitar romper rutas y despliegues. Dentro del modelo comercial actual representa la cocina dedicada de **Operacion Pro**; el tablero simple del plan Estandar vive dentro de `frontend/standard`.
+El tablero simple del plan Estandar vive dentro de `frontend/standard`; la cocina dedicada del plan Operacion Pro vive en `frontend/cocina`.
 
 ## Roles
 
@@ -127,14 +128,18 @@ Operacion Pro - Frontend Mesero:
 - Agregar platillos al pedido.
 - Enviar platos a cocina.
 - Cobrar cuenta con tarjeta, efectivo o Yape.
+- Verificar pagos en efectivo solicitados desde la App Cliente.
+- Generar una cuenta QR vinculada al folio del pedido.
 - Liberar mesa despues del pago.
 
-Operacion Pro - Frontend Cocina Dedicada (`cocina-basico`):
+Operacion Pro - Frontend Cocina Dedicada (`frontend/cocina`):
 
 - Login para rol cocina o admin.
 - Tablero kanban claro con columnas: en espera, en preparacion, terminado, por pagar y pagado.
-- Polling cada 20 segundos contra el backend real.
+- Polling cada 15 segundos contra el backend real.
 - Avance manual del pedido completo: empezar preparacion, marcar terminado y entregar a mesa.
+- Indicador del origen del pedido, progreso por platillos y urgencia visual despues de 20 minutos.
+- Estadisticas del turno y filtro por mesa.
 - Filtros por estado con contador.
 - Estados de carga, error, vacio y toast de confirmacion.
 
@@ -165,13 +170,12 @@ Operacion Pro - Frontend Cliente:
 - Carrito persistente en navegador por mesa.
 - Pedido directo a cocina usando `POST /v1/pedidos`.
 - Tracking del pedido con WebSocket y fallback por polling.
-- Checkout postpago con tarjeta, Yape, efectivo y mixto.
+- Checkout postpago con tarjeta, Yape o efectivo.
 - Reserva simple y registro de resena.
 - Estados de carga, error, vacio y confirmaciones visuales.
 
 ## Pendiente
 
-- Consolidar el empaquetado comercial y los feature flags de Operacion Pro.
 - Completar Multi-local: inventario, varias sedes, exportaciones, pagos divididos, fidelizacion y modo offline.
 - Cambio de mesa.
 - QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
@@ -275,7 +279,7 @@ http://127.0.0.1:5174
 ## Levantar Operacion Pro - Cocina Dedicada
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina-basico"
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina"
 npm.cmd install
 npm.cmd run dev
 ```
@@ -346,7 +350,7 @@ npm.cmd run build
 cd frontend/mesero
 npm.cmd run build
 
-cd frontend/cocina-basico
+cd frontend/cocina
 npm.cmd run build
 
 cd frontend/cliente

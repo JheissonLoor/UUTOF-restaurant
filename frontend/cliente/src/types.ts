@@ -2,7 +2,7 @@ export type UserRole = 'cliente' | 'mesero' | 'cocina' | 'admin';
 export type AppTab = 'inicio' | 'reservar' | 'menu' | 'pedidos';
 export type PedidoEstado = 'creado' | 'en_cocina' | 'listo' | 'entregado' | 'pagado' | 'cancelado';
 export type EstadoItem = 'en_cocina' | 'ready' | 'delivered';
-export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo' | 'mixto';
+export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo';
 
 export interface UsuarioSesion {
   id_usuario: number;
@@ -119,11 +119,6 @@ export interface PagoResponse {
   estado: 'pendiente' | 'verificado';
   cambio?: number | null;
   recibo: Record<string, unknown>;
-}
-
-export interface PagoParte {
-  metodo: 'tarjeta' | 'yape';
-  monto: number;
 }
 
 export interface ReservaPublica {

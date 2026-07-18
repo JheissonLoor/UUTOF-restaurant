@@ -102,7 +102,7 @@ export interface PedidoItemWrite {
   };
 }
 
-export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo' | 'mixto';
+export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo';
 
 export interface PagoRequest {
   id_pedido: number;
@@ -117,6 +117,24 @@ export interface PagoResponse {
   estado: 'pendiente' | 'verificado';
   cambio?: number;
   recibo: Record<string, unknown>;
+}
+
+export interface PagoPendiente {
+  id_transaccion: number;
+  id_pedido: number;
+  id_mesa: number;
+  numero_mesa: number;
+  cliente: string;
+  monto: number;
+  propina: number;
+  total: number;
+  fecha: string;
+}
+
+export interface CuentaResponse {
+  folio: string;
+  qr_url: string;
+  total: number;
 }
 
 export type WSEvent =
