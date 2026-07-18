@@ -1,10 +1,12 @@
 import clsx from 'clsx';
-import { Clock3, ReceiptText, Table2, Users, X } from 'lucide-react';
+import { Clock3, Download, QrCode, ReceiptText, Table2, Users, X } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
 
 import { mesaStatePresentation } from '@/components/mesas/mesaPresentation';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/format';
+import { createMesaQrPayload } from '@/lib/mesaQr';
 import type { Mesa, MesaEstado } from '@/types/api';
 
 interface MesaDetailModalProps {
@@ -18,9 +20,11 @@ const stateOptions = Object.entries(mesaStatePresentation) as Array<[MesaEstado,
 
 export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaDetailModalProps): JSX.Element {
   const modalRef = useRef<HTMLElement | null>(null);
+  const qrRef = useRef<SVGSVGElement | null>(null);
   const [nextState, setNextState] = useState<MesaEstado>(mesa.estado);
   const state = mesaStatePresentation[mesa.estado];
   const hasChanges = nextState !== mesa.estado;
+  const qrPayload = createMesaQrPayload(mesa.id_mesa);
 
   useEffect(() => {
     setNextState(mesa.estado);
@@ -67,6 +71,21 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
   async function handleSubmit(): Promise<void> {
     if (!hasChanges) return;
     await onSubmit(nextState);
+  }
+
+  function handleDownloadQr(): void {
+    if (!qrRef.current) return;
+
+    const source = new XMLSerializer().serializeToString(qrRef.current);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `uttof-mesa-${mesa.numero}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -146,6 +165,40 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
           ) : (
             <p className="mt-3 text-sm text-ink-500">No hay un pedido activo asociado a esta mesa.</p>
           )}
+        </div>
+
+        <div className="mt-5 border-t border-dashed border-[rgba(42,30,20,0.08)] pt-5">
+          <div className="flex items-center gap-2">
+            <QrCode aria-hidden="true" className="text-terracotta-500" size={18} strokeWidth={1.8} />
+            <h3 className="font-serif text-base font-semibold text-ink-900">QR de acceso del cliente</h3>
+          </div>
+          <div className="mt-4 grid items-center gap-4 sm:grid-cols-[148px_minmax(0,1fr)]">
+            <div className="grid h-[148px] w-[148px] place-items-center rounded-md border border-[rgba(42,30,20,0.08)] bg-white p-2">
+              <QRCodeSVG
+                ref={qrRef}
+                aria-label={`Código QR de acceso para la mesa ${mesa.numero}`}
+                bgColor="#FFFFFF"
+                fgColor="#2A1E14"
+                level="M"
+                marginSize={1}
+                size={132}
+                title={`UTTOF Mesa ${mesa.numero}`}
+                value={qrPayload}
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm leading-5 text-ink-500">
+                Coloca este código en la mesa para que el comensal inicie su visita desde la app Cliente.
+              </p>
+              <code className="mt-2 block truncate rounded-sm bg-cream-100 px-2.5 py-2 text-xs text-ink-700">
+                {qrPayload}
+              </code>
+              <Button className="mt-3" type="button" variant="ghost" onClick={handleDownloadQr}>
+                <Download aria-hidden="true" size={15} strokeWidth={1.8} />
+                Descargar SVG
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="mt-5">

@@ -164,7 +164,7 @@ Multi-local - KDS Premium:
 
 Operacion Pro - Frontend Cliente:
 
-- Entrada walk-in con simulacion de escaneo QR y confirmacion de mesa.
+- Entrada walk-in con escaneo QR mediante la camara y confirmacion real de mesa.
 - Sesion automatica de cliente demo con JWT y refresh.
 - Carta publica conectada al backend real.
 - Carrito persistente en navegador por mesa.
@@ -178,7 +178,6 @@ Operacion Pro - Frontend Cliente:
 
 - Completar Multi-local: inventario, varias sedes, exportaciones, pagos divididos, fidelizacion y modo offline.
 - Cambio de mesa.
-- QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
 - Pruebas automatizadas mas amplias.
 - Despliegue en infraestructura publica.
 

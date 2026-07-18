@@ -4,6 +4,7 @@ Panel administrativo dedicado para gestionar la operación del restaurante desde
 
 ## Funciones
 
+- Generación y descarga del QR de acceso de cada mesa para la app Cliente.
 - Dashboard de ingresos, pedidos, ocupación, ticket promedio, top de platillos y actividad reciente.
 - Gestión de carta, categorías, mesas, reservas, empleados y configuración.
 - Reportes de ventas en pantalla por rango y granularidad.
