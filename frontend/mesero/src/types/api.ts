@@ -68,6 +68,7 @@ export interface Pedido {
   estado: PedidoEstado;
   comensales: number;
   total: number;
+  pago_estado: 'pendiente' | 'verificado' | null;
   items: PedidoItem[];
 }
 
@@ -113,6 +114,7 @@ export interface PagoRequest {
 
 export interface PagoResponse {
   id_transaccion: number;
+  estado: 'pendiente' | 'verificado';
   cambio?: number;
   recibo: Record<string, unknown>;
 }
@@ -121,6 +123,8 @@ export type WSEvent =
   | { tipo: 'pedido.listo'; id_pedido: number; id_mesa: number }
   | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }
   | { tipo: 'pedido.pagado_app'; id_pedido: number; id_mesa: number }
+  | { tipo: 'pago.efectivo_pendiente'; id_pedido: number; id_mesa: number }
+  | { tipo: 'pago.verificado'; id_pedido: number; id_mesa: number }
   | { tipo: 'mesa.checkin'; id_mesa: number; comensales: number };
 
 export interface ProblemDetails {

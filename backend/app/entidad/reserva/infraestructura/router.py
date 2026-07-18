@@ -19,8 +19,8 @@ async def get_reservas(
     session: AsyncSession = Depends(get_session),
     actor: dict = Depends(requires("cliente", "mesero", "admin")),
 ) -> list[ReservaPublica]:
-    _ = actor
-    return await listar_reservas(session, fecha)
+    id_usuario = int(actor["sub"]) if actor["rol"] == "cliente" else None
+    return await listar_reservas(session, fecha, id_usuario=id_usuario)
 
 
 @router.post("", response_model=ReservaPublica, status_code=status.HTTP_201_CREATED)

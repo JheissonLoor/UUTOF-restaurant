@@ -41,9 +41,17 @@ function updateFromRealtime(mesas: Mesa[], event: WSEvent): Mesa[] {
           : mesa.pedido_activo,
       };
     }
-    if (event.tipo === 'pedido.pagado_app') {
+    if (event.tipo === 'pedido.pagado_app' || event.tipo === 'pago.verificado') {
       const { pedido_activo: _pedidoActivo, ...mesaLibre } = mesa;
       return { ...mesaLibre, estado: 'libre' };
+    }
+    if (event.tipo === 'pago.efectivo_pendiente') {
+      return {
+        ...mesa,
+        pedido_activo: mesa.pedido_activo
+          ? { ...mesa.pedido_activo, alerta: 1, progreso: 'Pago en efectivo por verificar' }
+          : mesa.pedido_activo,
+      };
     }
     if (event.tipo === 'mesa.checkin') return { ...mesa, estado: 'ocupada' };
     return mesa;

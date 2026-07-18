@@ -17,7 +17,7 @@ export default function Navbar() {
   const { cartCount } = useOrder();
   const navigate = useNavigate();
 
-  const navLinks = user?.rol === 'admin' ? [...links, { to: '/admin', label: 'Admin' }] : links;
+  const navLinks = user?.rol === 'admin' ? [{ to: '/admin', label: 'Dashboard' }] : links;
 
   const handleLogout = () => {
     logout();
@@ -27,7 +27,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-lg border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={isAuthenticated ? '/menu' : '/'} className="inline-flex items-center gap-2.5">
+        <Link to={isAuthenticated ? (user?.rol === 'admin' ? '/admin' : '/menu') : '/'} className="inline-flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
             <UtensilsCrossed className="h-5 w-5 text-primary-foreground" />
           </div>

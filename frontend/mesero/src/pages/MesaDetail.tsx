@@ -97,6 +97,7 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
   }
 
   const subtitle = `${mesa.zona ? zoneLabels[mesa.zona] : 'Sin zona'} - ${mesa.pedido_activo?.comensales ?? 0} comensales - ${mesa.pedido_activo?.minutos ?? 0} min`;
+  const puedeCobrar = pedidoQuery.data?.estado === 'listo' || pedidoQuery.data?.estado === 'entregado';
 
   return (
     <main className="relative flex h-[100dvh] flex-col overflow-hidden bg-cream-50 text-ink-900" data-screen-label="02 Detalle">
@@ -164,7 +165,7 @@ export function MesaDetail({ mesa, onBack, onAddDishes, onPaid }: MesaDetailProp
         ) : null}
       </section>
 
-      <DetailFooter onAddDishes={onAddDishes} onCharge={() => setIsPayOpen(true)} />
+      <DetailFooter onAddDishes={onAddDishes} onCharge={puedeCobrar ? () => setIsPayOpen(true) : undefined} />
 
       <PaySheet
         open={isPayOpen}

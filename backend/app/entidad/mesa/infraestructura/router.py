@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.client import get_session
@@ -24,10 +24,19 @@ router = APIRouter(prefix="/v1/mesas", tags=["Mesas"])
 async def get_mesas(
     mesero_id: Literal["me"] | None = Query(default=None),
     session: AsyncSession = Depends(get_session),
-    actor: dict = Depends(requires("mesero", "admin")),
+    actor: dict = Depends(requires("cliente", "mesero", "admin")),
 ) -> list[MesaPublica]:
-    id_mesero = int(actor["sub"]) if actor["rol"] == "mesero" or mesero_id == "me" else None
-    return await listar_mesas(session, id_mesero=id_mesero)
+    if mesero_id == "me" and actor["rol"] != "mesero":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="El filtro de mesero solo esta disponible para meseros",
+        )
+
+    id_mesero = int(actor["sub"]) if actor["rol"] == "mesero" else None
+    mesas = await listar_mesas(session, id_mesero=id_mesero)
+    if actor["rol"] == "cliente":
+        return [mesa.model_copy(update={"pedido_activo": None}) for mesa in mesas]
+    return mesas
 
 
 @router.patch("/{id}/estado", response_model=MesaPublica)

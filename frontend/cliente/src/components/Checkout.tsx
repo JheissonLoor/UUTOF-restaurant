@@ -4,7 +4,7 @@ import { crearResena, pedirCuenta, registrarPago } from '@/api/cliente';
 import { getErrorDetail } from '@/api/errors';
 import { CheckIcon, CloseIcon, SparkIcon } from '@/components/icons';
 import { formatCurrency, formatOrderFolio } from '@/lib/format';
-import type { MetodoPago, PedidoPublico } from '@/types';
+import type { MetodoPago, PagoParte, PedidoPublico } from '@/types';
 
 const methods: Array<{ id: MetodoPago; label: string; detail: string }> = [
   { id: 'tarjeta', label: 'Tarjeta', detail: 'Crédito o débito' },
@@ -21,6 +21,7 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [rating, setRating] = useState(5);
+  const [mixedYape, setMixedYape] = useState(0);
 
   useEffect(() => {
     if (!pedido) return;
@@ -36,6 +37,10 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
   const tip = useMemo(() => Math.round((pedido?.total ?? 0) * tipPct) / 100, [pedido?.total, tipPct]);
   const total = (pedido?.total ?? 0) + tip;
 
+  useEffect(() => {
+    setMixedYape(Number((total / 2).toFixed(2)));
+  }, [total]);
+
   if (!pedido) return null;
   const activePedido = pedido;
 
@@ -43,9 +48,15 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
     setError(null);
     setIsProcessing(true);
     try {
-      if (method !== 'efectivo') {
-        await registrarPago(activePedido.id_pedido, method, activePedido.total, tip);
+      let desglose: PagoParte[] | undefined;
+      if (method === 'mixto') {
+        const yape = Math.min(Math.max(mixedYape, 0.01), total - 0.01);
+        desglose = [
+          { metodo: 'yape', monto: Number(yape.toFixed(2)) },
+          { metodo: 'tarjeta', monto: Number((total - yape).toFixed(2)) },
+        ];
       }
+      await registrarPago(activePedido.id_pedido, method, activePedido.total, tip, desglose);
       setStep('success');
     } catch (payError) {
       setError(getErrorDetail(payError, 'No se pudo procesar el pago.'));
@@ -55,6 +66,10 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
   }
 
   async function finishWithReview(): Promise<void> {
+    if (method === 'efectivo') {
+      onFinished();
+      return;
+    }
     try {
       await crearResena({ id_pedido: activePedido.id_pedido, calificacion: rating, comentario: 'Experiencia registrada desde App Cliente' });
     } catch {
@@ -143,6 +158,25 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
               ) : null}
 
               {method === 'efectivo' ? <div className="mt-4 rounded-md bg-sun-50 px-4 py-3 text-sm text-sun-600">El mesero verificará la recepción del efectivo desde su app.</div> : null}
+              {method === 'mixto' ? (
+                <div className="mt-4 rounded-xl bg-cream-bg p-4">
+                  <label className="text-xs font-semibold text-ink-500" htmlFor="cliente-mixed-yape">Monto por Yape</label>
+                  <input
+                    id="cliente-mixed-yape"
+                    type="number"
+                    min="0.01"
+                    max={Math.max(total - 0.01, 0.01)}
+                    step="0.01"
+                    value={mixedYape}
+                    onChange={(event) => setMixedYape(Number(event.target.value))}
+                    className="mt-2 min-h-11 w-full rounded-md border border-[rgba(31,26,20,0.15)] bg-white px-3"
+                  />
+                  <div className="mt-3 flex justify-between text-sm text-ink-700">
+                    <span>Resto por tarjeta</span>
+                    <strong>{formatCurrency(Math.max(total - mixedYape, 0))}</strong>
+                  </div>
+                </div>
+              ) : null}
               {error ? <div className="mt-4 rounded-md bg-coral-50 px-4 py-3 text-sm text-coral-600">{error}</div> : null}
 
               <button type="button" disabled={isProcessing} className="mt-4 min-h-12 w-full rounded-md bg-coral px-4 text-sm font-semibold text-white disabled:opacity-60" onClick={() => void handlePay()}>
@@ -163,7 +197,7 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
                 <div className="mt-2 flex justify-between text-sm"><span>Método</span><span>{methods.find((item) => item.id === method)?.label}</span></div>
                 <div className="mt-2 flex justify-between font-serif text-xl font-bold"><span>Total</span><span>{formatCurrency(total)}</span></div>
               </div>
-              <div className="mt-5 rounded-xl bg-cream-bg p-4">
+              {method !== 'efectivo' ? <div className="mt-5 rounded-xl bg-cream-bg p-4">
                 <div className="mb-3 flex items-center justify-center gap-2 font-serif text-xl font-semibold">
                   <SparkIcon className="text-sun-600" size={18} />
                   Deja tu reseña
@@ -175,9 +209,9 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> : null}
               <button type="button" className="mt-5 min-h-12 w-full rounded-md bg-coral px-4 text-sm font-semibold text-white" onClick={() => void finishWithReview()}>
-                Volver al inicio
+                {method === 'efectivo' ? 'Volver al pedido' : 'Volver al inicio'}
               </button>
             </section>
           ) : null}

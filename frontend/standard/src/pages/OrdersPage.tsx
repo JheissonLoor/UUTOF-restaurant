@@ -94,10 +94,15 @@ export default function OrdersPage() {
   const currentIndex = orderIndex[pedido.estado];
   const cancelado = pedido.estado === 'cancelado';
   const pagado = pedido.estado === 'pagado';
-  const puedePagar = pedido.estado === 'entregado' || pedido.estado === 'listo';
+  const pagoPendiente = pedido.pago_estado === 'pendiente';
+  const puedePagar = !pagoPendiente && (pedido.estado === 'entregado' || pedido.estado === 'listo');
 
-  const handleFinished = () => {
+  const handleFinished = (pending: boolean) => {
     setCheckoutOpen(false);
+    if (pending) {
+      void refetch();
+      return;
+    }
     setActivePedidoId(null);
     clearMesa();
     navigate('/menu');
@@ -179,6 +184,10 @@ export default function OrdersPage() {
         {pagado ? (
           <div className="mt-5 rounded-2xl bg-status-paid/10 text-status-paid text-sm font-medium px-4 py-3 text-center">
             Pedido pagado. ¡Gracias!
+          </div>
+        ) : pagoPendiente ? (
+          <div className="mt-5 rounded-2xl bg-accent/10 text-foreground text-sm font-medium px-4 py-3 text-center">
+            Pago en efectivo pendiente de verificación por el mesero.
           </div>
         ) : (
           <button

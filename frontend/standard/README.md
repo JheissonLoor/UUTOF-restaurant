@@ -1,6 +1,6 @@
 # UTTOF - Plan Estándar
 
-Frontend del **plan estándar** de UTTOF: una sola app web para el cliente del restaurante, con el diseño cálido de la marca y conectada al backend real (FastAPI) de UTTOF.
+Frontend del **plan estándar o Básico** de UTTOF: una sola app web para el cliente y el administrador del restaurante, con el diseño cálido de la marca y conectada al backend real (FastAPI) de UTTOF.
 
 A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orientados a operación por rol), el plan estándar reúne el flujo del comensal en una experiencia unificada y sencilla.
 
@@ -21,7 +21,8 @@ A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orie
 - Selección de mesa desde `/v1/mesas` con check-in (`/mesas/{id}/checkin`).
 - Envío de pedido a cocina (`/v1/pedidos`) desde el carrito.
 - Seguimiento del pedido con tracker de estado (recibido → cocina → listo → entregado → pagado), con polling automático.
-- Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo, mixto) + reseña (`/v1/resenas`).
+- Checkout postpago con propina y pago (`/v1/pagos`: tarjeta, **Yape**, efectivo y mixto) + reseña (`/v1/resenas`).
+- El efectivo queda pendiente hasta que un mesero confirma la recepción; el pago mixto registra su desglose entre Yape y tarjeta.
 - Reservas (`/v1/reservas`): formulario con mesa/fecha/hora/personas/notas y listado de reservas del día.
 - Seguimiento del pedido en tiempo real por **WebSocket** (con reconexión automática y polling de respaldo).
 - Panel de administración (solo rol `admin`) con dashboard desde `/v1/reportes/dashboard`: KPIs del día (ingresos, pedidos, ocupación, ticket promedio) con variación vs. ayer, ingresos por día, pedidos por estado, top platillos, pagos por tipo, alertas y actividad reciente.
@@ -64,3 +65,5 @@ npm run build   # tsc -b && vite build
 ## Credenciales demo
 
 Las mismas del backend UTTOF: `cliente@uttof.pe / cliente123`, `admin@uttof.pe / admin123`.
+
+Los roles `mesero` y `cocina` usan sus aplicaciones operativas en los puertos `5174` y `5175`; no ingresan por este frontend.

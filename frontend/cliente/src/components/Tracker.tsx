@@ -119,7 +119,11 @@ export function Tracker({ idPedido, onClose, onCheckout }: { idPedido: number | 
                   </div>
                 ))}
               </div>
-              {activeStage >= 3 ? (
+              {pedido.pago_estado === 'pendiente' ? (
+                <div className="mt-4 rounded-md bg-sun-50 px-4 py-3 text-center text-sm font-semibold text-sun-600">
+                  Pago en efectivo pendiente de verificación por el mesero
+                </div>
+              ) : activeStage >= 3 && pedido.estado !== 'pagado' ? (
                 <button type="button" className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-md bg-coral px-4 text-sm font-semibold text-white" onClick={() => onCheckout(pedido)}>
                   <BellIcon size={16} />
                   Pedir la cuenta

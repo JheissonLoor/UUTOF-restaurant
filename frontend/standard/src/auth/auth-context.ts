@@ -5,6 +5,7 @@ import type { UsuarioSesion } from '@/types';
 export interface AuthResult {
   success: boolean;
   error?: string;
+  usuario?: UsuarioSesion;
 }
 
 export interface AuthContextType {

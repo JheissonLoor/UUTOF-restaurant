@@ -10,6 +10,7 @@ async def listar_reservas_por_rango(
     *,
     inicio: datetime,
     fin: datetime,
+    id_usuario: int | None = None,
 ) -> list[dict[str, Any]]:
     result = await session.execute(
         text(
@@ -26,12 +27,51 @@ async def listar_reservas_por_rango(
             LEFT JOIN usuario AS u ON u.id_usuario = r.id_usuario
             WHERE r.hora_reserva >= :inicio
               AND r.hora_reserva < :fin
+              AND (:id_usuario IS NULL OR r.id_usuario = :id_usuario)
             ORDER BY r.hora_reserva, r.id_reserva
             """
         ),
-        {"inicio": inicio, "fin": fin},
+        {"inicio": inicio, "fin": fin, "id_usuario": id_usuario},
     )
     return [dict(row._mapping) for row in result.all()]
+
+
+async def obtener_mesa_para_reserva(session: AsyncSession, id_mesa: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_mesa, capacidad
+            FROM mesa
+            WHERE id_mesa = :id_mesa
+            LIMIT 1
+            """
+        ),
+        {"id_mesa": id_mesa},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
+async def existe_conflicto_reserva(
+    session: AsyncSession,
+    *,
+    id_mesa: int,
+    hora_reserva: datetime,
+) -> bool:
+    result = await session.execute(
+        text(
+            """
+            SELECT EXISTS(
+              SELECT 1
+              FROM reserva
+              WHERE id_mesa = :id_mesa
+                AND ABS(TIMESTAMPDIFF(MINUTE, hora_reserva, :hora_reserva)) < 120
+            )
+            """
+        ),
+        {"id_mesa": id_mesa, "hora_reserva": hora_reserva},
+    )
+    return bool(result.scalar_one())
 
 
 async def crear_reserva(

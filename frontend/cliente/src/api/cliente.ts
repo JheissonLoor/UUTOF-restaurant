@@ -7,6 +7,7 @@ import type {
   MesaSession,
   MetodoPago,
   PagoResponse,
+  PagoParte,
   PedidoCreateResponse,
   PedidoPublico,
   PlatillosPage,
@@ -79,13 +80,19 @@ export async function pedirCuenta(idPedido: number): Promise<CuentaResponse> {
   return response.data;
 }
 
-export async function registrarPago(idPedido: number, metodo: MetodoPago, monto: number, propina: number): Promise<PagoResponse> {
+export async function registrarPago(
+  idPedido: number,
+  metodo: MetodoPago,
+  monto: number,
+  propina: number,
+  desglose?: PagoParte[],
+): Promise<PagoResponse> {
   const response = await apiClient.post<PagoResponse>('/pagos', {
     id_pedido: idPedido,
     metodo,
     monto,
     propina,
-    recibido: metodo === 'efectivo' ? monto + propina : undefined,
+    desglose,
   });
   return response.data;
 }

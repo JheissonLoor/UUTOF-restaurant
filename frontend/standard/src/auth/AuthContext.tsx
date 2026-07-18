@@ -15,15 +15,33 @@ function extractError(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function getInitialUser(): UsuarioSesion | null {
+  const session = getSession();
+  if (session?.usuario.rol === 'cliente' || session?.usuario.rol === 'admin') {
+    return session.usuario;
+  }
+  if (session) clearSession();
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UsuarioSesion | null>(() => getSession()?.usuario ?? null);
+  const [user, setUser] = useState<UsuarioSesion | null>(getInitialUser);
 
   const login = useCallback(async (email: string, password: string): Promise<AuthResult> => {
     try {
       const session = await loginRequest({ email, password });
+      if (session.usuario.rol !== 'cliente' && session.usuario.rol !== 'admin') {
+        clearSession();
+        return {
+          success: false,
+          error: session.usuario.rol === 'mesero'
+            ? 'Usa la App del Mesero en el puerto 5174.'
+            : 'Usa el Panel de Cocina en el puerto 5175.',
+        };
+      }
       saveSession(session);
       setUser(session.usuario);
-      return { success: true };
+      return { success: true, usuario: session.usuario };
     } catch (error) {
       return { success: false, error: extractError(error, 'No se pudo iniciar sesión') };
     }
@@ -36,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const session = await loginRequest({ email: data.email, password: data.password });
         saveSession(session);
         setUser(session.usuario);
-        return { success: true };
+        return { success: true, usuario: session.usuario };
       } catch (error) {
         return { success: false, error: extractError(error, 'No se pudo crear la cuenta') };
       }

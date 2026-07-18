@@ -5,7 +5,7 @@ import { X, Check, CreditCard, Smartphone, Wallet, Layers, Sparkles, Star } from
 import { crearResena, pedirCuenta, registrarPago } from '@/api/pedidos';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { MetodoPago, PedidoPublico } from '@/types';
+import type { MetodoPago, PagoParte, PedidoPublico } from '@/types';
 
 const methods: Array<{ id: MetodoPago; label: string; detail: string; icon: typeof CreditCard }> = [
   { id: 'tarjeta', label: 'Tarjeta', detail: 'Crédito o débito', icon: CreditCard },
@@ -17,7 +17,7 @@ const methods: Array<{ id: MetodoPago; label: string; detail: string; icon: type
 interface CheckoutProps {
   pedido: PedidoPublico;
   onClose: () => void;
-  onFinished: () => void;
+  onFinished: (pending: boolean) => void;
 }
 
 export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
@@ -28,6 +28,7 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [rating, setRating] = useState(5);
+  const [mixedYape, setMixedYape] = useState(0);
 
   useEffect(() => {
     pedirCuenta(pedido.id_pedido)
@@ -38,13 +39,23 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
   const tip = useMemo(() => Math.round(pedido.total * tipPct) / 100, [pedido.total, tipPct]);
   const total = pedido.total + tip;
 
+  useEffect(() => {
+    setMixedYape(Number((total / 2).toFixed(2)));
+  }, [total]);
+
   async function handlePay() {
     setError(null);
     setIsProcessing(true);
     try {
-      if (method !== 'efectivo') {
-        await registrarPago(pedido.id_pedido, method, pedido.total, tip);
+      let desglose: PagoParte[] | undefined;
+      if (method === 'mixto') {
+        const yape = Math.min(Math.max(mixedYape, 0.01), total - 0.01);
+        desglose = [
+          { metodo: 'yape', monto: Number(yape.toFixed(2)) },
+          { metodo: 'tarjeta', monto: Number((total - yape).toFixed(2)) },
+        ];
       }
+      await registrarPago(pedido.id_pedido, method, pedido.total, tip, desglose);
       setStep('success');
     } catch {
       setError('No se pudo procesar el pago. Intenta de nuevo.');
@@ -54,12 +65,16 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
   }
 
   async function finishWithReview() {
+    if (method === 'efectivo') {
+      onFinished(true);
+      return;
+    }
     try {
       await crearResena({ id_pedido: pedido.id_pedido, calificacion: rating, comentario: 'Experiencia registrada desde el plan estándar' });
     } catch {
       // La reseña es secundaria al cierre del pago.
     }
-    onFinished();
+    onFinished(false);
   }
 
   return (
@@ -192,6 +207,29 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
                   </div>
                 )}
 
+                {method === 'mixto' && (
+                  <div className="mt-4 rounded-2xl bg-background border p-4">
+                    <p className="text-sm font-semibold">Divide entre Yape y tarjeta</p>
+                    <label className="mt-3 block text-xs text-muted-foreground" htmlFor="mixed-yape">
+                      Monto por Yape
+                    </label>
+                    <input
+                      id="mixed-yape"
+                      type="number"
+                      min="0.01"
+                      max={Math.max(total - 0.01, 0.01)}
+                      step="0.01"
+                      value={mixedYape}
+                      onChange={(event) => setMixedYape(Number(event.target.value))}
+                      className="mt-1 w-full rounded-xl border bg-card px-3 py-2.5 text-sm"
+                    />
+                    <div className="mt-3 flex justify-between text-sm">
+                      <span className="text-muted-foreground">Resto por tarjeta</span>
+                      <span className="font-semibold">{formatCurrency(Math.max(total - mixedYape, 0))}</span>
+                    </div>
+                  </div>
+                )}
+
                 {error && <div className="mt-4 rounded-2xl bg-destructive/10 text-destructive px-4 py-3 text-sm">{error}</div>}
 
                 <button
@@ -233,7 +271,7 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-background border p-4 mb-5">
+                {method !== 'efectivo' && <div className="rounded-2xl bg-background border p-4 mb-5">
                   <div className="flex items-center justify-center gap-2 font-heading text-lg font-semibold mb-3">
                     <Sparkles className="h-4 w-4 text-accent" /> Deja tu reseña
                   </div>
@@ -251,13 +289,13 @@ export function Checkout({ pedido, onClose, onFinished }: CheckoutProps) {
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
                 <button
                   onClick={finishWithReview}
                   className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-semibold hover:brightness-110 transition shadow-md shadow-primary/20"
                 >
-                  Volver al inicio
+                  {method === 'efectivo' ? 'Volver al pedido' : 'Volver al inicio'}
                 </button>
               </motion.div>
             )}

@@ -11,7 +11,14 @@ function isWSEvent(value: unknown): value is WSEvent {
   if (typeof value !== 'object' || value === null || !('tipo' in value) || typeof value.tipo !== 'string') {
     return false;
   }
-  return ['pedido.listo', 'pedido.item_listo', 'pedido.pagado_app', 'mesa.checkin'].includes(value.tipo);
+  return [
+    'pedido.listo',
+    'pedido.item_listo',
+    'pedido.pagado_app',
+    'pago.efectivo_pendiente',
+    'pago.verificado',
+    'mesa.checkin',
+  ].includes(value.tipo);
 }
 
 export function useWebSocket({ onEvent }: UseWebSocketOptions): void {

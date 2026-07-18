@@ -15,16 +15,20 @@ import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
 import type { UserRole } from '@/types';
 
+function homeForRole(role: UserRole | undefined): string {
+  return role === 'admin' ? '/admin' : '/menu';
+}
+
 function ProtectedRoute({ children, role }: { children: ReactNode; role?: UserRole }) {
   const { isAuthenticated, user } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (role && user?.rol !== role) return <Navigate to="/menu" replace />;
+  if (role && user?.rol !== role) return <Navigate to={homeForRole(user?.rol)} replace />;
   return <>{children}</>;
 }
 
 function PublicRoute({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) return <Navigate to="/menu" replace />;
+  const { isAuthenticated, user } = useAuth();
+  if (isAuthenticated) return <Navigate to={homeForRole(user?.rol)} replace />;
   return <>{children}</>;
 }
 

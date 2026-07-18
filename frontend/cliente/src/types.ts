@@ -104,6 +104,7 @@ export interface PedidoPublico {
   estado: PedidoEstado;
   comensales: number;
   total: number;
+  pago_estado: 'pendiente' | 'verificado' | null;
   items: PedidoItem[];
 }
 
@@ -115,8 +116,14 @@ export interface CuentaResponse {
 
 export interface PagoResponse {
   id_transaccion: number;
+  estado: 'pendiente' | 'verificado';
   cambio?: number | null;
   recibo: Record<string, unknown>;
+}
+
+export interface PagoParte {
+  metodo: 'tarjeta' | 'yape';
+  monto: number;
 }
 
 export interface ReservaPublica {
@@ -134,6 +141,7 @@ export type WSEvent =
   | { tipo: 'pedido.listo'; id_pedido: number }
   | { tipo: 'pedido.entregado'; id_pedido: number }
   | { tipo: 'pedido.pagado_app'; id_pedido: number; id_mesa?: number }
-  | { tipo: 'pago.verificado'; id_pedido: number }
+  | { tipo: 'pago.efectivo_pendiente'; id_pedido: number; id_mesa: number }
+  | { tipo: 'pago.verificado'; id_pedido: number; id_mesa?: number }
   | { tipo: 'pedido.items_agregados'; id_pedido: number; id_mesa: number }
   | { tipo: 'pong' };

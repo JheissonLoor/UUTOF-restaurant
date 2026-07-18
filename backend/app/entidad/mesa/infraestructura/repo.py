@@ -34,11 +34,19 @@ async def listar_mesas(
               COALESCE(items.items_count, 0) AS items_count,
               COALESCE(items.en_cocina, 0) AS en_cocina,
               CASE
+                WHEN EXISTS (
+                  SELECT 1 FROM pago pg
+                  WHERE pg.id_pedido = p.id_pedido AND pg.estado = 'pendiente'
+                ) THEN 1
                 WHEN m.estado = 'lista' OR COALESCE(items.listo, 0) > 0 THEN 1
                 WHEN p.id_pedido IS NOT NULL AND TIMESTAMPDIFF(MINUTE, p.creado_en, NOW()) >= 45 THEN 1
                 ELSE 0
               END AS alerta,
               CASE
+                WHEN EXISTS (
+                  SELECT 1 FROM pago pg
+                  WHERE pg.id_pedido = p.id_pedido AND pg.estado = 'pendiente'
+                ) THEN 'Pago en efectivo por verificar'
                 WHEN m.estado = 'lista' OR COALESCE(items.listo, 0) > 0 THEN 'Plato listo en pase'
                 WHEN p.id_pedido IS NULL THEN NULL
                 WHEN COALESCE(items.items_count, 0) = 0 THEN 'Esperando orden'

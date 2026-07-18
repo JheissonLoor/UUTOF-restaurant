@@ -413,9 +413,11 @@ async def obtener_pedido(session: AsyncSession, id_pedido: int) -> dict[str, Any
     pedido_result = await session.execute(
         text(
             """
-            SELECT id_pedido, id_mesa, estado, comensales, total
-            FROM pedido
-            WHERE id_pedido = :id_pedido
+            SELECT p.id_pedido, p.id_mesa, p.estado, p.comensales, p.total,
+                   pg.estado AS pago_estado
+            FROM pedido p
+            LEFT JOIN pago pg ON pg.id_pedido = p.id_pedido
+            WHERE p.id_pedido = :id_pedido
             LIMIT 1
             """
         ),

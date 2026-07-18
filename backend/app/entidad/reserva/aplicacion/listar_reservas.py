@@ -7,7 +7,17 @@ from app.entidad.reserva.infraestructura import repo
 from app.entidad.reserva.infraestructura.schemas import ReservaPublica
 
 
-async def listar_reservas(session: AsyncSession, fecha: date) -> list[ReservaPublica]:
+async def listar_reservas(
+    session: AsyncSession,
+    fecha: date,
+    *,
+    id_usuario: int | None = None,
+) -> list[ReservaPublica]:
     inicio, fin = rango_del_dia(fecha)
-    reservas = await repo.listar_reservas_por_rango(session, inicio=inicio, fin=fin)
+    reservas = await repo.listar_reservas_por_rango(
+        session,
+        inicio=inicio,
+        fin=fin,
+        id_usuario=id_usuario,
+    )
     return [ReservaPublica(**reserva) for reserva in reservas]

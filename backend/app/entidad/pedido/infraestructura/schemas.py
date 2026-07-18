@@ -22,6 +22,7 @@ class PedidoPublico(BaseModel):
     estado: Literal["creado", "en_cocina", "listo", "entregado", "pagado", "cancelado"]
     comensales: int
     total: float
+    pago_estado: Literal["pendiente", "verificado"] | None = None
     items: list[PedidoItemPublico]
 
 

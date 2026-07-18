@@ -8,7 +8,6 @@ import { useAuth } from '@/auth/useAuth';
 
 const demoAccounts = [
   { email: 'cliente@uttof.pe', password: 'cliente123', label: 'Cliente', emoji: '👤' },
-  { email: 'cocina@uttof.pe', password: 'cocina123', label: 'Cocina', emoji: '👨‍🍳' },
   { email: 'admin@uttof.pe', password: 'admin123', label: 'Admin', emoji: '🛠️' },
 ];
 
@@ -38,7 +37,7 @@ export default function LoginPage() {
     setLoading(false);
     if (result.success) {
       toast.success('¡Bienvenido de vuelta!');
-      navigate('/menu');
+      navigate(result.usuario?.rol === 'admin' ? '/admin' : '/menu');
     } else {
       toast.error(result.error);
     }
@@ -123,7 +122,7 @@ export default function LoginPage() {
             <p className="text-xs font-semibold text-muted-foreground mb-3 text-center uppercase tracking-wider">
               Cuentas demo
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {demoAccounts.map((acc) => (
                 <button
                   key={acc.email}

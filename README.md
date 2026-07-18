@@ -40,6 +40,7 @@ backend/
   requirements.txt
 
 frontend/
+  standard/
   admin/
   cliente/
   kds/
@@ -78,7 +79,7 @@ Backend:
 - Menu: categorias, platillos, creacion y actualizacion.
 - Mesas: listado, estado, check-in y sentar comensales.
 - Pedidos: listado para cocina, cambio de estado por flujo, detalle, creacion desde cliente, agregar items, llamar cocina, marcar item entregado y generar cuenta.
-- Pagos: registro de pago, cambio para efectivo, cierre de pedido y liberacion de mesa.
+- Pagos: tarjeta, Yape, efectivo y mixto; el efectivo solicitado por el cliente queda pendiente hasta que el mesero verifica el cobro.
 - Reservas y resenas para la experiencia del cliente.
 - Reportes: dashboard y ventas.
 - Configuracion base del restaurante.
@@ -146,12 +147,18 @@ Frontend Cliente:
 - Reserva simple y registro de resena.
 - Estados de carga, error, vacio y confirmaciones visuales.
 
+Frontend Plan Estandar:
+
+- Experiencia web unificada para cliente y administrador en el plan Basico.
+- Carta, carrito, check-in, pedido, seguimiento, checkout y reservas conectados al backend real.
+- Panel administrativo resumido para indicadores operativos.
+- Acceso restringido a cliente y admin; mesero y cocina conservan sus aplicaciones operativas.
+
 ## Pendiente
 
 - Division avanzada de cuenta.
 - Cambio de mesa.
 - QR real con camara del dispositivo para reemplazar la simulacion de escaneo.
-- Realtime mas profundo para cuenta y pagos.
 - Pruebas automatizadas mas amplias.
 - Despliegue.
 
@@ -177,6 +184,7 @@ Get-Content .\database\init_db.sql | mysql -u root -p
 Get-Content .\app\db\migrations.sql | mysql -u uttof_user -p uttof_db
 Get-Content .\app\db\003_mesero_app.sql | mysql -u uttof_user -p uttof_db
 Get-Content .\app\db\004_kds_premium.sql | mysql -u uttof_user -p uttof_db
+Get-Content .\app\db\005_pago_efectivo_pendiente.sql | mysql -u uttof_user -p uttof_db
 python -m app.db.seed
 ```
 
@@ -187,6 +195,7 @@ Get-Content .\database\init_db.sql | C:\xampp\mysql\bin\mysql.exe -u root -p
 Get-Content .\app\db\migrations.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 Get-Content .\app\db\003_mesero_app.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 Get-Content .\app\db\004_kds_premium.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\005_pago_efectivo_pendiente.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 ```
 
 ## Levantar Backend
@@ -204,6 +213,20 @@ URLs:
 - API: `http://127.0.0.1:8000`
 - Swagger: `http://127.0.0.1:8000/docs`
 - Health: `http://127.0.0.1:8000/health`
+
+## Levantar Plan Estandar
+
+```powershell
+cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\standard"
+npm.cmd install
+npm.cmd run dev
+```
+
+URL:
+
+```text
+http://127.0.0.1:5178
+```
 
 ## Levantar Panel Admin
 
@@ -315,6 +338,10 @@ npm.cmd run lint
 npm.cmd run build
 
 cd frontend/kds
+npm.cmd run lint
+npm.cmd run build
+
+cd frontend/standard
 npm.cmd run lint
 npm.cmd run build
 ```
