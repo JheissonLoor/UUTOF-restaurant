@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Las fuentes Playfair Display + DM Sans se cargan desde index.html */
+
+@layer base {
+  :root {
+    --background: 35 50% 96%;
+    --foreground: 0 0% 17%;
+
+    --card: 35 40% 98%;
+    --card-foreground: 0 0% 17%;
+
+    --popover: 35 40% 98%;
+    --popover-foreground: 0 0% 17%;
+
+    --primary: 16 55% 51%;
+    --primary-foreground: 35 50% 96%;
+
+    --secondary: 35 60% 95%;
+    --secondary-foreground: 0 0% 17%;
+
+    --muted: 35 30% 92%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 90 22% 46%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 35 25% 88%;
+    --input: 35 25% 88%;
+    --ring: 16 55% 51%;
+
+    --radius: 1rem;
+
+    /* Order status colors */
+    --status-waiting: 45 93% 47%;
+    --status-in-progress: 210 80% 55%;
+    --status-done: 270 50% 55%;
+    --status-unpaid: 25 90% 55%;
+    --status-paid: 142 60% 40%;
+    --status-cancelled: 0 30% 55%;
+
+    --sidebar-background: 35 40% 97%;
+    --sidebar-foreground: 0 0% 17%;
+    --sidebar-primary: 16 55% 51%;
+    --sidebar-primary-foreground: 35 50% 96%;
+    --sidebar-accent: 35 30% 92%;
+    --sidebar-accent-foreground: 0 0% 17%;
+    --sidebar-border: 35 25% 88%;
+    --sidebar-ring: 16 55% 51%;
+
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 35 50% 96%;
+    --card: 0 0% 13%;
+    --card-foreground: 35 50% 96%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 35 50% 96%;
+    --primary: 16 55% 51%;
+    --primary-foreground: 35 50% 96%;
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 35 50% 96%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 35 20% 65%;
+    --accent: 90 22% 46%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 16 55% 51%;
+    --sidebar-background: 0 0% 10%;
+    --sidebar-foreground: 35 50% 96%;
+    --sidebar-primary: 16 55% 51%;
+    --sidebar-primary-foreground: 35 50% 96%;
+    --sidebar-accent: 0 0% 17%;
+    --sidebar-accent-foreground: 35 50% 96%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 16 55% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-heading);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+}
