@@ -11,13 +11,12 @@ import MenuPage from '@/pages/MenuPage';
 import MesaPage from '@/pages/MesaPage';
 import ReservaPage from '@/pages/ReservaPage';
 import OrdersPage from '@/pages/OrdersPage';
+import CocinaPage from '@/pages/CocinaPage';
+import MeseroPage from '@/pages/MeseroPage';
 import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
+import { homeForRole } from '@/lib/roles';
 import type { UserRole } from '@/types';
-
-function homeForRole(role: UserRole | undefined): string {
-  return role === 'admin' ? '/admin' : '/menu';
-}
 
 function ProtectedRoute({ children, role }: { children: ReactNode; role?: UserRole }) {
   const { isAuthenticated, user } = useAuth();
@@ -62,10 +61,12 @@ export function App() {
             </PublicRoute>
           }
         />
+
+        {/* Cliente */}
         <Route
           path="/menu"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="cliente">
               <MenuPage />
             </ProtectedRoute>
           }
@@ -73,7 +74,7 @@ export function App() {
         <Route
           path="/mesa"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="cliente">
               <MesaPage />
             </ProtectedRoute>
           }
@@ -81,7 +82,7 @@ export function App() {
         <Route
           path="/reservar"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="cliente">
               <ReservaPage />
             </ProtectedRoute>
           }
@@ -89,11 +90,33 @@ export function App() {
         <Route
           path="/mis-pedidos"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="cliente">
               <OrdersPage />
             </ProtectedRoute>
           }
         />
+
+        {/* Cocina */}
+        <Route
+          path="/cocina"
+          element={
+            <ProtectedRoute role="cocina">
+              <CocinaPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Mesero / verificación */}
+        <Route
+          path="/mesero"
+          element={
+            <ProtectedRoute role="mesero">
+              <MeseroPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin */}
         <Route
           path="/admin"
           element={
@@ -102,6 +125,7 @@ export function App() {
             </ProtectedRoute>
           }
         />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

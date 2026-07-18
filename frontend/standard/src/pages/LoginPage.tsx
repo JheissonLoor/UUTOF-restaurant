@@ -8,6 +8,8 @@ import { useAuth } from '@/auth/useAuth';
 
 const demoAccounts = [
   { email: 'cliente@uttof.pe', password: 'cliente123', label: 'Cliente', emoji: '👤' },
+  { email: 'mesero@uttof.pe', password: 'mesero123', label: 'Mesero', emoji: '🧑‍💼' },
+  { email: 'cocina@uttof.pe', password: 'cocina123', label: 'Cocina', emoji: '👨‍🍳' },
   { email: 'admin@uttof.pe', password: 'admin123', label: 'Admin', emoji: '🛠️' },
 ];
 
@@ -37,7 +39,7 @@ export default function LoginPage() {
     setLoading(false);
     if (result.success) {
       toast.success('¡Bienvenido de vuelta!');
-      navigate(result.usuario?.rol === 'admin' ? '/admin' : '/menu');
+      navigate('/');
     } else {
       toast.error(result.error);
     }

@@ -4,20 +4,27 @@ import { UtensilsCrossed, LogOut, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/auth/useAuth';
 import { useOrder } from '@/order/useOrder';
 import { cn } from '@/lib/utils';
+import { homeForRole } from '@/lib/roles';
+import type { UserRole } from '@/types';
 
-const links = [
-  { to: '/menu', label: 'Carta' },
-  { to: '/mesa', label: 'Mesa' },
-  { to: '/reservar', label: 'Reservar' },
-  { to: '/mis-pedidos', label: 'Mis Pedidos' },
-];
+const linksByRole: Record<UserRole, Array<{ to: string; label: string }>> = {
+  cliente: [
+    { to: '/menu', label: 'Carta' },
+    { to: '/mesa', label: 'Mesa' },
+    { to: '/reservar', label: 'Reservar' },
+    { to: '/mis-pedidos', label: 'Mis Pedidos' },
+  ],
+  cocina: [{ to: '/cocina', label: 'Cocina' }],
+  mesero: [{ to: '/mesero', label: 'Verificación' }],
+  admin: [{ to: '/admin', label: 'Admin' }],
+};
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useOrder();
   const navigate = useNavigate();
 
-  const navLinks = user?.rol === 'admin' ? [{ to: '/admin', label: 'Dashboard' }] : links;
+  const links = user ? linksByRole[user.rol] : [];
 
   const handleLogout = () => {
     logout();
@@ -27,7 +34,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-lg border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to={isAuthenticated ? (user?.rol === 'admin' ? '/admin' : '/menu') : '/'} className="inline-flex items-center gap-2.5">
+        <Link to={isAuthenticated ? homeForRole(user?.rol) : '/'} className="inline-flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
             <UtensilsCrossed className="h-5 w-5 text-primary-foreground" />
           </div>
@@ -39,7 +46,7 @@ export default function Navbar() {
 
         {isAuthenticated && (
           <nav className="flex items-center gap-1 sm:gap-2">
-            {navLinks.map((link) => (
+            {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -51,7 +58,7 @@ export default function Navbar() {
                 }
               >
                 <span className="inline-flex items-center gap-1.5">
-                  {link.label === 'Mis Pedidos' && <ShoppingBag className="h-3.5 w-3.5" />}
+                  {link.to === '/mis-pedidos' && <ShoppingBag className="h-3.5 w-3.5" />}
                   {link.label}
                   {link.to === '/mis-pedidos' && cartCount > 0 && (
                     <span className="ml-0.5 w-4 h-4 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">

@@ -1,8 +1,17 @@
 # UTTOF - Plan Estándar
 
-Frontend del **plan estándar o Básico** de UTTOF: una sola app web para el cliente y el administrador del restaurante, con el diseño cálido de la marca y conectada al backend real (FastAPI) de UTTOF.
+Frontend del **plan estándar o Básico** de UTTOF: **una sola app web todo-en-uno** que reúne los 4 roles del restaurante (cliente, cocina, mesero y admin), con el diseño cálido de la marca y conectada al backend real (FastAPI) de UTTOF.
 
-A diferencia de los frontends `cliente`, `mesero`, `cocina-basico` y `kds` (orientados a operación por rol), el plan estándar reúne el flujo del comensal en una experiencia unificada y sencilla.
+A diferencia de los frontends dedicados (`cliente`, `mesero`, `cocina-basico`, `kds`), el plan estándar unifica todo en un solo app: al iniciar sesión, cada usuario aterriza en el panel de su rol.
+
+## Roles y paneles
+
+| Rol | Ruta | Panel |
+| --- | --- | --- |
+| `cliente` | `/menu`, `/mesa`, `/reservar`, `/mis-pedidos` | Carta, mesa, reservas, pedido y pago |
+| `cocina` | `/cocina` | Tablero kanban de pedidos por estado |
+| `mesero` | `/mesero` | Verificación de salida (pagado / pendiente) |
+| `admin` | `/admin` | Dashboard de reportes |
 
 ## Stack
 

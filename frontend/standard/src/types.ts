@@ -220,6 +220,27 @@ export interface DashboardResponse {
   heatmap_pedidos: number[][];
 }
 
+// ===== Cocina / Mesero (paneles de staff) =====
+export type EstadoCocina = 'espera' | 'cocina' | 'listo' | 'entregado' | 'pagado';
+export type PedidoTransition = 'empezarPreparacion' | 'marcarTerminado' | 'entregarMesa';
+
+export interface KitchenOrderItem {
+  id_detalle?: number;
+  qty: number;
+  nombre: string;
+  nota?: string | null;
+}
+
+export interface KitchenOrder {
+  id_pedido: number;
+  cliente: string;
+  mesa: number;
+  estado: EstadoCocina;
+  minutos: number;
+  total: number;
+  items: KitchenOrderItem[];
+}
+
 // ===== Eventos WebSocket =====
 export type WSEvent =
   | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }
