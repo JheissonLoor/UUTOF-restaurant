@@ -6,7 +6,10 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getSucursales } from '../api/sucursales';
 import { useAuth } from '../auth/useAuth';
+import type { SucursalResumen } from '../types/multilocal';
 
 const STORAGE_KEY = 'uttof_multilocal_sucursal_activa';
 
@@ -16,6 +19,8 @@ interface SucursalContextValue {
   sucursalActiva: SucursalActiva;
   setSucursal: (sucursal: SucursalActiva) => void;
   selectorBloqueado: boolean;
+  sucursales: SucursalResumen[];
+  sucursalesLoading: boolean;
 }
 
 export const SucursalContext = createContext<SucursalContextValue | null>(null);
@@ -32,6 +37,11 @@ function readStoredSucursal(): SucursalActiva {
 
 export function SucursalProvider({ children }: PropsWithChildren) {
   const { usuario } = useAuth();
+  const branchesQuery = useQuery({
+    queryKey: ['sucursales'],
+    queryFn: getSucursales,
+    staleTime: 60_000,
+  });
   const assignedBranch = usuario?.rol === 'gerente_sucursal' ? usuario.id_sucursal : null;
   const selectorBloqueado = Boolean(assignedBranch);
   const [selectedBranch, setSelectedBranch] = useState<SucursalActiva>(readStoredSucursal);
@@ -53,8 +63,14 @@ export function SucursalProvider({ children }: PropsWithChildren) {
   );
 
   const value = useMemo<SucursalContextValue>(
-    () => ({ sucursalActiva, setSucursal, selectorBloqueado }),
-    [selectorBloqueado, setSucursal, sucursalActiva],
+    () => ({
+      sucursalActiva,
+      setSucursal,
+      selectorBloqueado,
+      sucursales: branchesQuery.data ?? [],
+      sucursalesLoading: branchesQuery.isPending,
+    }),
+    [branchesQuery.data, branchesQuery.isPending, selectorBloqueado, setSucursal, sucursalActiva],
   );
 
   return <SucursalContext.Provider value={value}>{children}</SucursalContext.Provider>;

@@ -1,6 +1,7 @@
 import { LogOut, Star, Utensils } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import { useSucursal } from '../context/useSucursal';
 import { navigationGroups } from '../navigation';
 import type { RolUsuario } from '../types/api';
 
@@ -28,9 +29,11 @@ function getInitials(name: string): string {
 
 export function Sidebar({ branchCount }: SidebarProps) {
   const { usuario, logout } = useAuth();
+  const { sucursales } = useSucursal();
+  const effectiveBranchCount = branchCount ?? sucursales.length;
   const initials = usuario ? getInitials(usuario.nombre) : 'UT';
-  const branchLabel = branchCount
-    ? `${roleLabels[usuario?.rol ?? 'admin']} · ${branchCount} sucursales`
+  const branchLabel = effectiveBranchCount
+    ? `${roleLabels[usuario?.rol ?? 'admin']} · ${effectiveBranchCount} sucursales`
     : roleLabels[usuario?.rol ?? 'admin'];
 
   return (
@@ -70,9 +73,9 @@ export function Sidebar({ branchCount }: SidebarProps) {
                 >
                   <Icon size={16} strokeWidth={1.9} className="shrink-0" aria-hidden="true" />
                   <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                  {item.badge === 'sucursales' && branchCount ? (
+                  {item.badge === 'sucursales' && effectiveBranchCount ? (
                     <span className="rounded-[5px] bg-plum/20 px-1.5 py-0.5 font-mono text-[9px] text-plum">
-                      {branchCount}
+                      {effectiveBranchCount}
                     </span>
                   ) : null}
                   {item.premium ? (
