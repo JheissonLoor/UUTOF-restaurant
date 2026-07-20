@@ -123,3 +123,38 @@ export interface DateRangeSelection {
   from?: string;
   to?: string;
 }
+
+export interface CategoriaMenu {
+  id_categoria: number;
+  nombre: string;
+  orden: number;
+}
+
+export interface MenuMultilocalItem {
+  id_platillo: number;
+  id_sucursal: number;
+  sucursal: string;
+  color: string;
+  id_categoria: number;
+  categoria: string;
+  nombre: string;
+  precio: number;
+  disponible: boolean;
+  imagen_url?: string | null;
+  vendidos_hoy: number;
+}
+
+export interface PlatilloMultilocalCreate {
+  id_sucursal: number;
+  id_categoria: number;
+  nombre: string;
+  precio: number;
+  disponible: boolean;
+  imagen_url?: string | null;
+}
+
+export interface PlatilloMultilocalPatch {
+  id_sucursal: number;
+  precio?: number;
+  disponible?: boolean;
+}

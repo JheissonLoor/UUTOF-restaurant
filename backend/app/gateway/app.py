@@ -10,6 +10,7 @@ from app.db.client import engine
 from app.entidad.menu.infraestructura.router import router as menu_router
 from app.entidad.inventario.infraestructura.router import router as inventario_router
 from app.entidad.mesa.infraestructura.router import router as mesa_router
+from app.entidad.operacion_multilocal.infraestructura.router import router as operacion_multilocal_router
 from app.entidad.pago.infraestructura.router import router as pago_router
 from app.entidad.pedido.infraestructura.router import router as pedido_router
 from app.entidad.resena.infraestructura.router import router as resena_router
@@ -71,6 +72,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(usuario_router)
     app.include_router(mesa_router)
+    app.include_router(operacion_multilocal_router)
     app.include_router(pedido_router)
     app.include_router(pago_router)
     app.include_router(menu_router)

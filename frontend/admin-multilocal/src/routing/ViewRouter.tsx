@@ -12,6 +12,9 @@ const PrediccionView = lazy(async () => ({
 const ReportesView = lazy(async () => ({
   default: (await import('../views/ReportesView')).ReportesView,
 }));
+const MenuView = lazy(async () => ({
+  default: (await import('../views/MenuView')).MenuView,
+}));
 
 export function ViewRouter() {
   return (
@@ -31,6 +34,8 @@ export function ViewRouter() {
                     ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><PrediccionView /></Suspense>
                     : view.slug === 'reportes'
                       ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><ReportesView /></Suspense>
+                      : view.slug === 'menu'
+                        ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><MenuView /></Suspense>
                 : <PhaseShellView view={view} />
           }
         />
