@@ -170,3 +170,25 @@ export interface EmpleadoMultilocal {
   ventas_turno: number;
   activo: boolean;
 }
+
+export interface IntegracionEmpresa {
+  id: number;
+  nombre: string;
+  categoria: 'contabilidad' | 'delivery' | 'facturacion';
+  descripcion: string;
+  color: string;
+  conectado: boolean;
+  credencial_hint?: string | null;
+}
+
+export interface ApiKeyResumen {
+  id: number;
+  nombre: string;
+  token_mascara: string;
+  creada_en: string;
+  ultimo_uso?: string | null;
+}
+
+export interface ApiKeyCreada extends ApiKeyResumen {
+  token: string;
+}
