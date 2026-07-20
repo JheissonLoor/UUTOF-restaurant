@@ -5,10 +5,12 @@ import { AdminLayout } from './layout/AdminLayout';
 import { Sidebar } from './layout/Sidebar';
 import { LoginPage } from './pages/LoginPage';
 import { ViewRouter } from './routing/ViewRouter';
+import { useEnterpriseRealtime } from './hooks/useEnterpriseRealtime';
 
 const enterpriseRoles = ['admin', 'dueno', 'dueño', 'gerente_sucursal'] as const;
 
 function AdminWorkspace() {
+  useEnterpriseRealtime();
   return (
     <SucursalProvider>
       <AdminLayout sidebar={<Sidebar />}>

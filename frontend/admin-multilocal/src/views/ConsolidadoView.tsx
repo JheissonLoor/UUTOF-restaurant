@@ -5,7 +5,6 @@ import { getApiErrorMessage } from '../api/errors';
 import { getMetricasConsolidado } from '../api/multilocal';
 import { BranchPerfTable } from '../components/consolidado/BranchPerfTable';
 import { KpiRow } from '../components/consolidado/KpiRow';
-import { useMetricasRealtime } from '../hooks/useMetricasRealtime';
 import { TopBar } from '../layout/TopBar';
 import type { RangoMetricas } from '../types/multilocal';
 
@@ -19,7 +18,6 @@ const dateFormatter = new Intl.DateTimeFormat('es-PE', {
 
 export function ConsolidadoView() {
   const [rango, setRango] = useState<RangoMetricas>('hoy');
-  useMetricasRealtime();
   const query = useQuery({
     queryKey: ['metricas', 'consolidado', rango],
     queryFn: () => getMetricasConsolidado(rango),
