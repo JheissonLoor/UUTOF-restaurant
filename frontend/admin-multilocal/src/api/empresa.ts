@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ApiKeyCreada, ApiKeyResumen, IntegracionEmpresa } from '../types/multilocal';
+import type { ApiKeyCreada, ApiKeyResumen, IntegracionEmpresa, MarcaConfig } from '../types/multilocal';
 
 export async function getIntegraciones(): Promise<IntegracionEmpresa[]> {
   const { data } = await apiClient.get<IntegracionEmpresa[]>('/integraciones');
@@ -27,4 +27,14 @@ export async function createApiKey(nombre: string): Promise<ApiKeyCreada> {
 
 export async function revokeApiKey(id: number): Promise<void> {
   await apiClient.delete(`/api-keys/${id}`);
+}
+
+export async function getMarcaConfig(): Promise<MarcaConfig> {
+  const { data } = await apiClient.get<MarcaConfig>('/config/marca');
+  return data;
+}
+
+export async function updateMarcaConfig(payload: MarcaConfig): Promise<MarcaConfig> {
+  const { data } = await apiClient.put<MarcaConfig>('/config/marca', payload);
+  return data;
 }

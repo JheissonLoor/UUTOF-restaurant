@@ -192,3 +192,10 @@ export interface ApiKeyResumen {
 export interface ApiKeyCreada extends ApiKeyResumen {
   token: string;
 }
+
+export interface MarcaConfig {
+  nombre_marca: string;
+  logo_url?: string | null;
+  color_primario: string;
+  subdominio: string;
+}

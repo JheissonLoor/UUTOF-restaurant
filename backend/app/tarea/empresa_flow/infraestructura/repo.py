@@ -143,3 +143,28 @@ async def revocar_api_key(session: AsyncSession, id_api_key: int) -> bool:
     )
     await session.commit()
     return bool(result.rowcount)
+
+
+async def obtener_marca(session: AsyncSession) -> dict[str, Any]:
+    result = await session.execute(
+        text("SELECT nombre_marca, logo_url, color_primario, subdominio FROM marca_config WHERE id_config = 1"),
+    )
+    return dict(result.one()._mapping)
+
+
+async def guardar_marca(session: AsyncSession, data: dict[str, Any]) -> dict[str, Any]:
+    await session.execute(
+        text(
+            """
+            UPDATE marca_config
+            SET nombre_marca = :nombre_marca,
+                logo_url = :logo_url,
+                color_primario = :color_primario,
+                subdominio = :subdominio
+            WHERE id_config = 1
+            """
+        ),
+        data,
+    )
+    await session.commit()
+    return await obtener_marca(session)

@@ -10,12 +10,15 @@ from app.tarea.empresa_flow.aplicacion.gestionar_integraciones import (
     listar_integraciones,
     revocar_api_key,
 )
+from app.tarea.empresa_flow.aplicacion.gestionar_marca import guardar_marca, obtener_marca
 from app.tarea.empresa_flow.infraestructura.schemas import (
     ApiKeyCreada,
     ApiKeyCrearRequest,
     ApiKeyResumen,
     ConectarIntegracionRequest,
     IntegracionResumen,
+    MarcaConfig,
+    MarcaConfigUpdate,
 )
 from app.utilidad.rbac.infraestructura.deps import requires
 
@@ -77,3 +80,19 @@ async def delete_api_key(
 ) -> Response:
     await revocar_api_key(session, id_api_key)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/config/marca", response_model=MarcaConfig)
+async def get_marca(
+    session: AsyncSession = Depends(get_session), actor: dict = Depends(owner),
+) -> MarcaConfig:
+    return await obtener_marca(session)
+
+
+@router.put("/config/marca", response_model=MarcaConfig)
+async def put_marca(
+    data: MarcaConfigUpdate,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(owner),
+) -> MarcaConfig:
+    return await guardar_marca(session, data)

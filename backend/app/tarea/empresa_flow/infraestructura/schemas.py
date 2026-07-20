@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class IntegracionResumen(BaseModel):
@@ -32,3 +32,22 @@ class ApiKeyCrearRequest(BaseModel):
 
 class ApiKeyCreada(ApiKeyResumen):
     token: str
+
+
+class MarcaConfig(BaseModel):
+    nombre_marca: str
+    logo_url: str | None = None
+    color_primario: str
+    subdominio: str
+
+
+class MarcaConfigUpdate(BaseModel):
+    nombre_marca: str = Field(min_length=2, max_length=120)
+    logo_url: str | None = Field(default=None, max_length=1_500_000)
+    color_primario: str = Field(pattern=r"^#[0-9A-Fa-f]{6}$")
+    subdominio: str = Field(min_length=3, max_length=63, pattern=r"^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$")
+
+    @field_validator("color_primario")
+    @classmethod
+    def normalizar_color(cls, value: str) -> str:
+        return value.upper()
