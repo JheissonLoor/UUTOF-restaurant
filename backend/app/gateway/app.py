@@ -13,6 +13,7 @@ from app.entidad.pago.infraestructura.router import router as pago_router
 from app.entidad.pedido.infraestructura.router import router as pedido_router
 from app.entidad.resena.infraestructura.router import router as resena_router
 from app.entidad.reserva.infraestructura.router import router as reserva_router
+from app.entidad.sucursal.infraestructura.router import router as sucursal_router
 from app.entidad.usuario.infraestructura.router import router as usuario_router
 from app.gateway.error_handler import register_exception_handlers
 from app.tarea.reporte_flow.infraestructura.router import router as reporte_router
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(pago_router)
     app.include_router(menu_router)
     app.include_router(reserva_router)
+    app.include_router(sucursal_router)
     app.include_router(resena_router)
     app.include_router(reporte_router)
     app.include_router(metrica_router)

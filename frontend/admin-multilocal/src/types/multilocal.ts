@@ -40,3 +40,21 @@ export interface SucursalResumen {
   mesas: number;
   activa: boolean;
 }
+
+export interface NuevaSucursalRequest {
+  nombre: string;
+  direccion: string;
+  color: 'coral' | 'mint' | 'sky' | 'plum' | 'sun';
+  mesas: number;
+}
+
+export interface SucursalComparativa {
+  id_sucursal: number;
+  nombre: string;
+  color: string;
+  ingresos_semana: number;
+  ticket_promedio: number;
+  resenas_promedio: number | null;
+  empleados: number;
+  margen_pct: number | null;
+}
