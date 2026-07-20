@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './auth/ProtectedRoute';
+import { SucursalProvider } from './context/SucursalContext';
 import { AdminLayout } from './layout/AdminLayout';
 import { Sidebar } from './layout/Sidebar';
 import { LoginPage } from './pages/LoginPage';
@@ -9,9 +10,11 @@ const enterpriseRoles = ['admin', 'dueno', 'dueño', 'gerente_sucursal'] as cons
 
 function AdminWorkspace() {
   return (
-    <AdminLayout sidebar={<Sidebar />}>
-      <ViewRouter />
-    </AdminLayout>
+    <SucursalProvider>
+      <AdminLayout sidebar={<Sidebar />}>
+        <ViewRouter />
+      </AdminLayout>
+    </SucursalProvider>
   );
 }
 
