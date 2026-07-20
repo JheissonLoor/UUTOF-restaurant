@@ -123,3 +123,21 @@ async def registrar_accion(
         },
     )
     await session.commit()
+
+
+async def acciones_registradas(
+    session: AsyncSession,
+    *,
+    id_sucursal: int | None,
+) -> set[str]:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_recomendacion
+            FROM ia_recomendacion_accion
+            WHERE id_sucursal <=> :id_sucursal
+            """
+        ),
+        {"id_sucursal": id_sucursal},
+    )
+    return {str(row.id_recomendacion) for row in result.all()}

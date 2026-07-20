@@ -39,6 +39,8 @@ async def obtener_prediccion(
         id_sucursal=id_sucursal,
         pronostico=pronostico_dict,
     )
+    acciones = await repo.acciones_registradas(session, id_sucursal=id_sucursal)
+    recomendaciones = [item for item in recomendaciones if item.id not in acciones]
     hoy = datetime.now(LIMA).date()
     recalculado = datetime.combine(hoy, time(hour=3), tzinfo=LIMA)
     return PrediccionResponse(
