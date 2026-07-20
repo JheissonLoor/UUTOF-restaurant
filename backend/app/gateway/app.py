@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
@@ -15,6 +16,8 @@ from app.entidad.reserva.infraestructura.router import router as reserva_router
 from app.entidad.usuario.infraestructura.router import router as usuario_router
 from app.gateway.error_handler import register_exception_handlers
 from app.tarea.reporte_flow.infraestructura.router import router as reporte_router
+from app.tarea.metrica_flow.infraestructura.router import router as metrica_router
+from app.tarea.metrica_flow.infraestructura.ticker import emitir_metricas_periodicamente
 from app.utilidad.auth.infraestructura.router import router as auth_router
 from app.utilidad.configuracion.infraestructura.router import router as configuracion_router
 from app.utilidad.realtime.infraestructura.router import router as realtime_router
@@ -34,8 +37,14 @@ class AppSettings(BaseSettings):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    yield
-    await engine.dispose()
+    metricas_task = asyncio.create_task(emitir_metricas_periodicamente())
+    try:
+        yield
+    finally:
+        metricas_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await metricas_task
+        await engine.dispose()
 
 
 def create_app() -> FastAPI:
@@ -65,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(reserva_router)
     app.include_router(resena_router)
     app.include_router(reporte_router)
+    app.include_router(metrica_router)
     app.include_router(configuracion_router)
     app.include_router(realtime_router)
 
