@@ -117,3 +117,9 @@ export interface AccionRecomendacionResponse {
 export type ReporteTipo = 'ventas' | 'productos' | 'empleados' | 'inventario';
 export type ReporteFormato = 'pdf' | 'xlsx';
 export type RangoReporte = 'hoy' | '7d' | '30d' | 'personalizado';
+
+export interface DateRangeSelection {
+  rango: RangoReporte;
+  from?: string;
+  to?: string;
+}
