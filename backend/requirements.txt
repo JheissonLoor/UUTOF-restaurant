@@ -14,3 +14,5 @@ python-dotenv
 tzdata
 pytest
 httpx
+reportlab
+openpyxl
