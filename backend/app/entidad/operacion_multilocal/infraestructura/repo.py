@@ -140,3 +140,35 @@ async def retirar_platillo(session: AsyncSession, *, id_platillo: int, id_sucurs
     )
     await session.commit()
     return bool(result.rowcount)
+
+
+async def listar_empleados(session: AsyncSession, *, id_sucursal: int | None) -> list[dict[str, Any]]:
+    result = await session.execute(
+        text(
+            """
+            SELECT u.id_usuario,
+                   u.nombre,
+                   u.email,
+                   u.rol,
+                   u.id_sucursal,
+                   s.nombre AS sucursal,
+                   s.color,
+                   ROUND(COALESCE(SUM(CASE
+                     WHEN pa.estado = 'verificado' AND DATE(pa.fecha) = CURRENT_DATE
+                     THEN pa.monto ELSE 0 END), 0), 2) AS ventas_turno,
+                   u.activo
+            FROM usuario u
+            INNER JOIN sucursal s ON s.id_sucursal = u.id_sucursal
+            LEFT JOIN mesa m ON m.id_mesero = u.id_usuario AND m.id_sucursal = u.id_sucursal
+            LEFT JOIN pedido p ON p.id_mesa = m.id_mesa
+            LEFT JOIN pago pa ON pa.id_pedido = p.id_pedido
+            WHERE u.rol IN ('mesero', 'cocina', 'gerente_sucursal')
+              AND (:id_sucursal IS NULL OR u.id_sucursal = :id_sucursal)
+            GROUP BY u.id_usuario, u.nombre, u.email, u.rol,
+                     u.id_sucursal, s.nombre, s.color, u.activo
+            ORDER BY s.id_sucursal, u.activo DESC, u.nombre
+            """
+        ),
+        {"id_sucursal": id_sucursal},
+    )
+    return [dict(row._mapping) for row in result.all()]

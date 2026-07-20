@@ -8,8 +8,10 @@ from app.entidad.operacion_multilocal.aplicacion.gestionar_menu import (
     listar_menu,
     retirar_platillo,
 )
+from app.entidad.operacion_multilocal.aplicacion.listar_empleados import listar_empleados
 from app.entidad.operacion_multilocal.infraestructura.schemas import (
     MenuMultilocalItem,
+    EmpleadoMultilocal,
     PlatilloMultilocalCreate,
     PlatilloMultilocalPatch,
 )
@@ -75,3 +77,12 @@ async def delete_platillo_multilocal(
     _require_branch(actor, id_sucursal)
     await retirar_platillo(session, id_platillo=id_platillo, id_sucursal=id_sucursal)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/empleados", response_model=list[EmpleadoMultilocal])
+async def get_empleados_multilocal(
+    id_sucursal: int | None = Query(default=None, gt=0),
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("admin", "dueno", "gerente_sucursal")),
+) -> list[EmpleadoMultilocal]:
+    return await listar_empleados(session, id_sucursal=_scope(actor, id_sucursal))

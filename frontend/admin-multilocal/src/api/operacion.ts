@@ -1,6 +1,7 @@
 import { apiClient } from './client';
 import type {
   CategoriaMenu,
+  EmpleadoMultilocal,
   MenuMultilocalItem,
   PlatilloMultilocalCreate,
   PlatilloMultilocalPatch,
@@ -33,4 +34,11 @@ export async function updatePlatilloMultilocal(
 
 export async function deletePlatilloMultilocal(idPlatillo: number, idSucursal: number): Promise<void> {
   await apiClient.delete(`/multilocal/menu/platillos/${idPlatillo}`, { params: { id_sucursal: idSucursal } });
+}
+
+export async function getEmpleadosMultilocal(idSucursal?: number): Promise<EmpleadoMultilocal[]> {
+  const { data } = await apiClient.get<EmpleadoMultilocal[]>('/multilocal/empleados', {
+    params: idSucursal ? { id_sucursal: idSucursal } : undefined,
+  });
+  return data;
 }

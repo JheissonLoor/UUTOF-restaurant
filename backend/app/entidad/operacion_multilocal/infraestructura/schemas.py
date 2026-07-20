@@ -36,3 +36,15 @@ class PlatilloMultilocalPatch(BaseModel):
         if self.precio is None and self.disponible is None:
             raise ValueError("Debes enviar precio o disponibilidad")
         return self
+
+
+class EmpleadoMultilocal(BaseModel):
+    id_usuario: int
+    nombre: str
+    email: str
+    rol: str
+    id_sucursal: int
+    sucursal: str
+    color: str
+    ventas_turno: float
+    activo: bool

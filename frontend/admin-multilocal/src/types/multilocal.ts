@@ -158,3 +158,15 @@ export interface PlatilloMultilocalPatch {
   precio?: number;
   disponible?: boolean;
 }
+
+export interface EmpleadoMultilocal {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  rol: 'mesero' | 'cocina' | 'gerente_sucursal';
+  id_sucursal: number;
+  sucursal: string;
+  color: string;
+  ventas_turno: number;
+  activo: boolean;
+}
