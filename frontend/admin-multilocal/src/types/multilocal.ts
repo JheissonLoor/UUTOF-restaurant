@@ -113,3 +113,7 @@ export interface AccionRecomendacionResponse {
   accion: AccionRecomendacion;
   ok: boolean;
 }
+
+export type ReporteTipo = 'ventas' | 'productos' | 'empleados' | 'inventario';
+export type ReporteFormato = 'pdf' | 'xlsx';
+export type RangoReporte = 'hoy' | '7d' | '30d' | 'personalizado';
