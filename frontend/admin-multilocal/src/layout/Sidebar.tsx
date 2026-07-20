@@ -35,6 +35,7 @@ export function Sidebar({ branchCount }: SidebarProps) {
   const branchLabel = effectiveBranchCount
     ? `${roleLabels[usuario?.rol ?? 'admin']} · ${effectiveBranchCount} sucursales`
     : roleLabels[usuario?.rol ?? 'admin'];
+  const isBranchManager = usuario?.rol === 'gerente_sucursal';
 
   return (
     <div className="flex h-full flex-col px-[18px] pb-[22px] pt-[26px] text-bg2">
@@ -56,7 +57,7 @@ export function Sidebar({ branchCount }: SidebarProps) {
                 {group.label}
               </p>
             ) : null}
-            {group.items.map((item) => {
+            {group.items.filter((item) => !isBranchManager || !['/admin/config', '/admin/integraciones', '/admin/marca'].includes(item.path)).map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink

@@ -18,6 +18,9 @@ const MenuView = lazy(async () => ({
 const EmpleadosView = lazy(async () => ({
   default: (await import('../views/EmpleadosView')).EmpleadosView,
 }));
+const ConfigView = lazy(async () => ({
+  default: (await import('../views/ConfigView')).ConfigView,
+}));
 
 export function ViewRouter() {
   return (
@@ -41,6 +44,12 @@ export function ViewRouter() {
                         ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><MenuView /></Suspense>
                         : view.slug === 'empleados'
                           ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><EmpleadosView /></Suspense>
+                          : view.slug === 'config'
+                            ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><ConfigView /></Suspense>
+                            : view.slug === 'integraciones'
+                              ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><ConfigView initialTab="integraciones" /></Suspense>
+                              : view.slug === 'marca'
+                                ? <Suspense fallback={<div className="h-96 animate-pulse rounded-card bg-bg2" />}><ConfigView initialTab="marca" /></Suspense>
                 : <PhaseShellView view={view} />
           }
         />

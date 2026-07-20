@@ -199,3 +199,24 @@ export interface MarcaConfig {
   color_primario: string;
   subdominio: string;
 }
+
+export interface GeneralConfig {
+  nombre_comercial: string;
+  ruc: string;
+  email: string;
+  telefono: string;
+  direccion: string;
+  horario_apertura: string;
+  horario_cierre: string;
+  timezone: 'America/Lima';
+}
+
+export interface FacturacionConfig {
+  plan: string;
+  precio_por_local: number;
+  sucursales_facturadas: number;
+  total_mensual: number;
+  metodo_pago: string;
+  ultimos4: string;
+  proxima_factura: string;
+}

@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { ApiKeyCreada, ApiKeyResumen, IntegracionEmpresa, MarcaConfig } from '../types/multilocal';
+import type { ApiKeyCreada, ApiKeyResumen, FacturacionConfig, GeneralConfig, IntegracionEmpresa, MarcaConfig } from '../types/multilocal';
 
 export async function getIntegraciones(): Promise<IntegracionEmpresa[]> {
   const { data } = await apiClient.get<IntegracionEmpresa[]>('/integraciones');
@@ -36,5 +36,20 @@ export async function getMarcaConfig(): Promise<MarcaConfig> {
 
 export async function updateMarcaConfig(payload: MarcaConfig): Promise<MarcaConfig> {
   const { data } = await apiClient.put<MarcaConfig>('/config/marca', payload);
+  return data;
+}
+
+export async function getGeneralConfig(): Promise<GeneralConfig> {
+  const { data } = await apiClient.get<GeneralConfig>('/config/general');
+  return data;
+}
+
+export async function updateGeneralConfig(payload: GeneralConfig): Promise<GeneralConfig> {
+  const { data } = await apiClient.put<GeneralConfig>('/config/general', payload);
+  return data;
+}
+
+export async function getFacturacionConfig(): Promise<FacturacionConfig> {
+  const { data } = await apiClient.get<FacturacionConfig>('/config/facturacion');
   return data;
 }

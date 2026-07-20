@@ -51,3 +51,35 @@ class MarcaConfigUpdate(BaseModel):
     @classmethod
     def normalizar_color(cls, value: str) -> str:
         return value.upper()
+
+
+class GeneralConfig(BaseModel):
+    nombre_comercial: str
+    ruc: str
+    email: str
+    telefono: str
+    direccion: str
+    horario_apertura: str
+    horario_cierre: str
+    timezone: Literal["America/Lima"]
+
+
+class GeneralConfigUpdate(BaseModel):
+    nombre_comercial: str = Field(min_length=2, max_length=120)
+    ruc: str = Field(pattern=r"^\d{11}$")
+    email: str = Field(min_length=5, max_length=120)
+    telefono: str = Field(min_length=7, max_length=32)
+    direccion: str = Field(min_length=3, max_length=180)
+    horario_apertura: str = Field(pattern=r"^\d{2}:\d{2}$")
+    horario_cierre: str = Field(pattern=r"^\d{2}:\d{2}$")
+    timezone: Literal["America/Lima"]
+
+
+class FacturacionConfig(BaseModel):
+    plan: str
+    precio_por_local: float
+    sucursales_facturadas: int
+    total_mensual: float
+    metodo_pago: str
+    ultimos4: str
+    proxima_factura: str

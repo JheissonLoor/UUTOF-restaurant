@@ -168,3 +168,55 @@ async def guardar_marca(session: AsyncSession, data: dict[str, Any]) -> dict[str
     )
     await session.commit()
     return await obtener_marca(session)
+
+
+async def obtener_config_general(session: AsyncSession) -> dict[str, Any]:
+    result = await session.execute(
+        text(
+            """
+            SELECT nombre_comercial, ruc, email, telefono, direccion,
+                   DATE_FORMAT(horario_apertura, '%H:%i') AS horario_apertura,
+                   DATE_FORMAT(horario_cierre, '%H:%i') AS horario_cierre,
+                   timezone
+            FROM config_general_multilocal WHERE id_config = 1
+            """
+        )
+    )
+    return dict(result.one()._mapping)
+
+
+async def guardar_config_general(session: AsyncSession, data: dict[str, Any]) -> dict[str, Any]:
+    await session.execute(
+        text(
+            """
+            UPDATE config_general_multilocal
+            SET nombre_comercial = :nombre_comercial,
+                ruc = :ruc,
+                email = :email,
+                telefono = :telefono,
+                direccion = :direccion,
+                horario_apertura = :horario_apertura,
+                horario_cierre = :horario_cierre,
+                timezone = :timezone
+            WHERE id_config = 1
+            """
+        ),
+        data,
+    )
+    await session.commit()
+    return await obtener_config_general(session)
+
+
+async def obtener_facturacion(session: AsyncSession) -> dict[str, Any]:
+    result = await session.execute(
+        text(
+            """
+            SELECT f.plan, f.precio_por_local,
+                   (SELECT COUNT(*) FROM sucursal WHERE activa = TRUE) AS sucursales_facturadas,
+                   f.metodo_pago, f.ultimos4,
+                   DATE_FORMAT(f.proxima_factura, '%Y-%m-%d') AS proxima_factura
+            FROM facturacion_config f WHERE f.id_config = 1
+            """
+        )
+    )
+    return dict(result.one()._mapping)

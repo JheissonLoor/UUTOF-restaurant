@@ -11,6 +11,11 @@ from app.tarea.empresa_flow.aplicacion.gestionar_integraciones import (
     revocar_api_key,
 )
 from app.tarea.empresa_flow.aplicacion.gestionar_marca import guardar_marca, obtener_marca
+from app.tarea.empresa_flow.aplicacion.gestionar_configuracion import (
+    guardar_config_general,
+    obtener_config_general,
+    obtener_facturacion,
+)
 from app.tarea.empresa_flow.infraestructura.schemas import (
     ApiKeyCreada,
     ApiKeyCrearRequest,
@@ -19,6 +24,9 @@ from app.tarea.empresa_flow.infraestructura.schemas import (
     IntegracionResumen,
     MarcaConfig,
     MarcaConfigUpdate,
+    FacturacionConfig,
+    GeneralConfig,
+    GeneralConfigUpdate,
 )
 from app.utilidad.rbac.infraestructura.deps import requires
 
@@ -96,3 +104,26 @@ async def put_marca(
     actor: dict = Depends(owner),
 ) -> MarcaConfig:
     return await guardar_marca(session, data)
+
+
+@router.get("/config/general", response_model=GeneralConfig)
+async def get_config_general(
+    session: AsyncSession = Depends(get_session), actor: dict = Depends(owner),
+) -> GeneralConfig:
+    return await obtener_config_general(session)
+
+
+@router.put("/config/general", response_model=GeneralConfig)
+async def put_config_general(
+    data: GeneralConfigUpdate,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(owner),
+) -> GeneralConfig:
+    return await guardar_config_general(session, data)
+
+
+@router.get("/config/facturacion", response_model=FacturacionConfig)
+async def get_config_facturacion(
+    session: AsyncSession = Depends(get_session), actor: dict = Depends(owner),
+) -> FacturacionConfig:
+    return await obtener_facturacion(session)
