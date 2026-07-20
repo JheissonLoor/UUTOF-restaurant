@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ConsolidadoView } from '../views/ConsolidadoView';
+import { InventarioView } from '../views/InventarioView';
 import { PhaseShellView } from '../views/PhaseShellView';
 import { SucursalesView } from '../views/SucursalesView';
 import { viewDefinitions } from '../views/viewDefinitions';
@@ -16,6 +17,8 @@ export function ViewRouter() {
               ? <ConsolidadoView />
               : view.slug === 'sucursales'
                 ? <SucursalesView />
+                : view.slug === 'inventario'
+                  ? <InventarioView />
                 : <PhaseShellView view={view} />
           }
         />
