@@ -18,6 +18,7 @@ async def listar_inventario(
               inv.descripcion,
               inv.id_sucursal,
               s.nombre AS sucursal,
+              s.color,
               ROUND(LEAST(inv.stock_actual / NULLIF(inv.stock_maximo, 0) * 100, 100), 1) AS nivel_pct,
               CONCAT(ROUND(inv.stock_actual, 1), ' ', inv.unidad) AS stock,
               CASE

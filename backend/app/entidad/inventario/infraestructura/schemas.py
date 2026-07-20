@@ -9,6 +9,7 @@ class InventarioItem(BaseModel):
     descripcion: str | None = None
     id_sucursal: int
     sucursal: str
+    color: str
     nivel_pct: float
     stock: str
     estado: Literal["ok", "bajo", "critico"]

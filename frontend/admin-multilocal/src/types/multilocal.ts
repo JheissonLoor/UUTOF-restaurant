@@ -65,6 +65,7 @@ export interface InventarioItem {
   descripcion?: string | null;
   id_sucursal: number;
   sucursal: string;
+  color: string;
   nivel_pct: number;
   stock: string;
   estado: EstadoInventario;
