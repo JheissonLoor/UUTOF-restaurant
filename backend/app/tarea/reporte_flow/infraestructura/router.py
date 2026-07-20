@@ -19,12 +19,38 @@ router = APIRouter(prefix="/v1/reportes", tags=["Reportes"])
 
 @router.get("/ventas", response_model=ReporteVentasResponse)
 async def get_reporte_ventas(
-    from_date: date = Query(alias="from"),
-    to_date: date = Query(alias="to"),
+    from_date: date | None = Query(default=None, alias="from"),
+    to_date: date | None = Query(default=None, alias="to"),
     granularidad: Literal["dia", "semana", "mes"] = Query(default="dia"),
+    rango: RangoReporte = Query(default="7d"),
+    formato: FormatoReporte | None = Query(default=None),
+    id_sucursal: int | None = Query(default=None, gt=0),
     session: AsyncSession = Depends(get_session),
-    actor: dict = Depends(requires("admin")),
-) -> ReporteVentasResponse:
+    actor: dict = Depends(requires("admin", "dueno", "gerente_sucursal")),
+) -> ReporteVentasResponse | StreamingResponse:
+    if formato is not None:
+        try:
+            content, filename, media_type = await exportar_reporte(
+                session,
+                tipo="ventas",
+                rango=rango,
+                formato=formato,
+                desde=from_date,
+                hasta=to_date,
+                id_sucursal=_scope(actor, id_sucursal),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+        return StreamingResponse(
+            iter([content]),
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    if from_date is None or to_date is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Los parámetros 'from' y 'to' son obligatorios para el reporte JSON",
+        )
     return await obtener_ventas(session, from_date, to_date, granularidad)
 
 
