@@ -20,6 +20,7 @@ from app.gateway.error_handler import register_exception_handlers
 from app.tarea.reporte_flow.infraestructura.router import router as reporte_router
 from app.tarea.metrica_flow.infraestructura.router import router as metrica_router
 from app.tarea.metrica_flow.infraestructura.ticker import emitir_metricas_periodicamente
+from app.tarea.prediccion_flow.infraestructura.router import router as prediccion_router
 from app.utilidad.auth.infraestructura.router import router as auth_router
 from app.utilidad.configuracion.infraestructura.router import router as configuracion_router
 from app.utilidad.realtime.infraestructura.router import router as realtime_router
@@ -79,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(resena_router)
     app.include_router(reporte_router)
     app.include_router(metrica_router)
+    app.include_router(prediccion_router)
     app.include_router(configuracion_router)
     app.include_router(realtime_router)
 

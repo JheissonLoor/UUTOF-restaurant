@@ -83,3 +83,33 @@ export interface OrdenCompraResponse {
   estado: 'generada';
   items: number;
 }
+
+export type TipoRecomendacion = 'comprar' | 'staff' | 'menu';
+export type AccionRecomendacion = 'aceptar' | 'descartar';
+
+export interface PronosticoPunto {
+  hora: string;
+  demanda: number;
+}
+
+export interface RecomendacionIa {
+  id: string;
+  tipo: TipoRecomendacion;
+  texto: string;
+  impacto: string;
+}
+
+export interface PrediccionResponse {
+  modelo: string;
+  confianza: number;
+  recalculado_en: string;
+  pronostico: PronosticoPunto[];
+  picos: string[];
+  recomendaciones: RecomendacionIa[];
+}
+
+export interface AccionRecomendacionResponse {
+  id: string;
+  accion: AccionRecomendacion;
+  ok: boolean;
+}
