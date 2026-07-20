@@ -58,3 +58,27 @@ export interface SucursalComparativa {
   empleados: number;
   margen_pct: number | null;
 }
+
+export interface InventarioItem {
+  id_insumo: number;
+  nombre: string;
+  descripcion?: string | null;
+  id_sucursal: number;
+  sucursal: string;
+  nivel_pct: number;
+  stock: string;
+  estado: EstadoInventario;
+  sugerido: string;
+}
+
+export interface OrdenCompraRequest {
+  id_sucursal: number;
+  items: Array<{ id_insumo: number; cantidad: string }>;
+}
+
+export interface OrdenCompraResponse {
+  id_orden: number;
+  id_sucursal: number;
+  estado: 'generada';
+  items: number;
+}

@@ -66,12 +66,11 @@ async def metricas_por_sucursal(
               SELECT
                 id_sucursal,
                 CASE
-                  WHEN MIN(stock) <= 0 THEN 'critico'
-                  WHEN MIN(stock) <= 5 THEN 'bajo'
+                  WHEN MIN(stock_actual / NULLIF(stock_maximo, 0) * 100) < 15 THEN 'critico'
+                  WHEN MIN(stock_actual / NULLIF(stock_maximo, 0) * 100) < 35 THEN 'bajo'
                   ELSE 'ok'
                 END AS inventario_estado
-              FROM insumo
-              WHERE id_sucursal IS NOT NULL
+              FROM inventario_sucursal
               GROUP BY id_sucursal
             )
             SELECT

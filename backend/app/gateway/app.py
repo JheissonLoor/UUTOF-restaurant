@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.db.client import engine
 from app.entidad.menu.infraestructura.router import router as menu_router
+from app.entidad.inventario.infraestructura.router import router as inventario_router
 from app.entidad.mesa.infraestructura.router import router as mesa_router
 from app.entidad.pago.infraestructura.router import router as pago_router
 from app.entidad.pedido.infraestructura.router import router as pedido_router
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
     app.include_router(pedido_router)
     app.include_router(pago_router)
     app.include_router(menu_router)
+    app.include_router(inventario_router)
     app.include_router(reserva_router)
     app.include_router(sucursal_router)
     app.include_router(resena_router)
