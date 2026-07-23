@@ -49,13 +49,6 @@ frontend/
 
 docs/
   arquitectura.html
-
-design_handoff_cocina_basico/
-design_handoff_cocina_pro/
-design_handoff_cliente/
-design_handoff_kds/
-design_handoff_mesero/
-design_handoff_panel_admin/
 ```
 
 ## Modelo De Planes
