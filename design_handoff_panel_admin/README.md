@@ -8,7 +8,7 @@ Este paquete fue preparado a partir del prototipo HTML aprobado (`reference/pane
 
 ## 🎯 Para qué sirve este paquete
 
-Cuando le pidas a Claude Code que construya el Panel Admin, en lugar de improvisar colores y espaciados, va a usar **exactamente la spec definida aquí**.
+Al implementar el Panel Admin, en lugar de improvisar colores y espaciados, se usa **exactamente la spec definida aquí**.
 
 ## 📂 Qué contiene
 
@@ -24,7 +24,7 @@ Cuando le pidas a Claude Code que construya el Panel Admin, en lugar de improvis
 
 ---
 
-## 🚀 Cómo usar este paquete (prompt para Claude Code)
+## 🚀 Guía de implementación
 
 ```
 Lee toda la carpeta /design_handoff_panel_admin/ antes de empezar.

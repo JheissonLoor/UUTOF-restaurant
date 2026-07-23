@@ -30,7 +30,7 @@ Esta es la versión que se ofrece **por defecto** a cualquier restaurante que co
 
 No mezclar componentes de ambos paquetes — son dos productos distintos que comparten el mismo backend de pedidos.
 
-## 🚀 Prompt de implementacion
+## 🚀 Guía de implementación
 
 ```
 Lee TODA la carpeta /design_handoff_cocina_basico/ antes de escribir código:

@@ -30,7 +30,7 @@ Esta es la cocina del plan **Operación Pro**: una app dedicada, más pulida que
 
 No mezclar componentes de ambos paquetes — son dos productos distintos que comparten el mismo backend de pedidos.
 
-## 🚀 Prompt para Codex
+## 🚀 Guía de implementación
 
 ```
 Lee TODA la carpeta /design_handoff_cocina_pro/ antes de escribir código:
