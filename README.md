@@ -49,13 +49,6 @@ frontend/
 
 docs/
   arquitectura.html
-
-design_handoff_cocina_basico/
-design_handoff_cocina_pro/
-design_handoff_cliente/
-design_handoff_kds/
-design_handoff_mesero/
-design_handoff_panel_admin/
 ```
 
 ## Modelo De Planes
@@ -192,7 +185,7 @@ Requisitos locales:
 Crear `.env` del backend:
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
+cd backend
 copy .env.example .env
 ```
 
@@ -220,7 +213,7 @@ Get-Content .\app\db\005_pago_efectivo_pendiente.sql | C:\xampp\mysql\bin\mysql.
 ## Levantar Backend
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
+cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -236,7 +229,7 @@ URLs:
 ## Levantar Plan Estandar
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\standard"
+cd frontend/standard
 npm.cmd install
 npm.cmd run dev
 ```
@@ -250,7 +243,7 @@ http://127.0.0.1:5178
 ## Levantar Operacion Pro - Admin
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\admin"
+cd frontend/admin
 npm.cmd install
 npm.cmd run dev
 ```
@@ -264,7 +257,7 @@ http://127.0.0.1:5173
 ## Levantar Operacion Pro - Mesero
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\mesero"
+cd frontend/mesero
 npm.cmd install
 npm.cmd run dev
 ```
@@ -278,7 +271,7 @@ http://127.0.0.1:5174
 ## Levantar Operacion Pro - Cocina Dedicada
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina"
+cd frontend/cocina
 npm.cmd install
 npm.cmd run dev
 ```
@@ -292,7 +285,7 @@ http://127.0.0.1:5175
 ## Levantar Operacion Pro - Cliente
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cliente"
+cd frontend/cliente
 npm.cmd install
 npm.cmd run dev
 ```
@@ -306,7 +299,7 @@ http://127.0.0.1:5176
 ## Levantar Multi-local - KDS Premium
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\kds"
+cd frontend/kds
 npm.cmd install
 npm.cmd run dev
 ```
