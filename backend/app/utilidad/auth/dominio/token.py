@@ -47,16 +47,65 @@ def verify(token: str, token_type: str | None = None) -> dict[str, Any]:
     return payload
 
 
-def crear_access_token(subject: str, email: str, rol: str) -> str:
+def _claims_usuario(
+    subject: str,
+    email: str,
+    rol: str,
+    *,
+    es_invitado: bool,
+    id_sucursal: int | None,
+) -> dict[str, Any]:
+    return {
+        "sub": subject,
+        "email": email,
+        "rol": rol,
+        "es_invitado": es_invitado,
+        "id_sucursal": id_sucursal,
+    }
+
+
+def crear_access_token(
+    subject: str,
+    email: str,
+    rol: str,
+    *,
+    es_invitado: bool = False,
+    id_sucursal: int | None = None,
+) -> str:
     return encode(
-        {"sub": subject, "email": email, "rol": rol, "typ": "access"},
+        {
+            **_claims_usuario(
+                subject,
+                email,
+                rol,
+                es_invitado=es_invitado,
+                id_sucursal=id_sucursal,
+            ),
+            "typ": "access",
+        },
         timedelta(minutes=settings.access_token_expire_minutes),
     )
 
 
-def crear_refresh_token(subject: str, email: str, rol: str) -> str:
+def crear_refresh_token(
+    subject: str,
+    email: str,
+    rol: str,
+    *,
+    es_invitado: bool = False,
+    id_sucursal: int | None = None,
+) -> str:
     return encode(
-        {"sub": subject, "email": email, "rol": rol, "typ": "refresh"},
+        {
+            **_claims_usuario(
+                subject,
+                email,
+                rol,
+                es_invitado=es_invitado,
+                id_sucursal=id_sucursal,
+            ),
+            "typ": "refresh",
+        },
         timedelta(days=settings.refresh_token_expire_days),
     )
 

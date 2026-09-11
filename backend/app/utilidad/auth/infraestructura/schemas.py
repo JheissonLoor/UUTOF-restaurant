@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.utilidad.peru import normalizar_telefono_peru
 
 
 class RegisterRequest(BaseModel):
@@ -6,6 +8,11 @@ class RegisterRequest(BaseModel):
     password: str = Field(min_length=8, max_length=72)
     nombre: str = Field(min_length=2, max_length=120)
     telefono: str | None = Field(default=None, max_length=20)
+
+    @field_validator("telefono")
+    @classmethod
+    def validar_telefono(cls, value: str | None) -> str | None:
+        return normalizar_telefono_peru(value)
 
 
 class LoginRequest(BaseModel):
@@ -20,8 +27,11 @@ class RefreshRequest(BaseModel):
 class UsuarioPublico(BaseModel):
     id_usuario: int
     nombre: str
-    email: EmailStr
+    email: EmailStr | None
     rol: str
+    telefono: str | None = None
+    es_invitado: bool = False
+    id_sucursal: int | None = None
 
 
 class TokenResponse(BaseModel):

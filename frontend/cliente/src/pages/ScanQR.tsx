@@ -1,11 +1,14 @@
 import type { IScannerControls } from '@zxing/browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { checkinMesa } from '@/api/cliente';
+import { checkinMesa, checkinMesaQr, getConfiguracionPublica } from '@/api/cliente';
 import { getErrorDetail } from '@/api/errors';
 import { CameraIcon, CheckIcon, CloseIcon, TableIcon } from '@/components/icons';
 import { parseMesaQrPayload } from '@/lib/mesaQr';
+import type { MesaQrTarget } from '@/lib/mesaQr';
 import type { MesaSession } from '@/types';
+import { useAuth } from '@/auth/useAuth';
 
 type ScannerState = 'idle' | 'starting' | 'scanning' | 'checking' | 'error';
 
@@ -25,10 +28,12 @@ function getCameraError(error: unknown): string {
 }
 
 export function ScanQR({ onCheckedIn }: { onCheckedIn: (mesa: MesaSession) => void }): JSX.Element {
+  const { acceptSession } = useAuth();
+  const configQuery = useQuery({ queryKey: ['public', 'config'], queryFn: getConfiguracionPublica });
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
   const handledCodeRef = useRef(false);
-  const [mesaId, setMesaId] = useState('');
+  const [mesaCode, setMesaCode] = useState('');
   const [scannerState, setScannerState] = useState<ScannerState>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -40,20 +45,23 @@ export function ScanQR({ onCheckedIn }: { onCheckedIn: (mesa: MesaSession) => vo
     if (videoRef.current) videoRef.current.srcObject = null;
   }, []);
 
-  const handleCheckin = useCallback(async (id: number): Promise<boolean> => {
+  const handleCheckin = useCallback(async (target: MesaQrTarget): Promise<boolean> => {
     setError(null);
     setScannerState('checking');
     try {
-      const mesa = await checkinMesa(id);
+      const mesa = target.kind === 'secure'
+        ? (await checkinMesaQr(target.value))
+        : { mesa: await checkinMesa(target.idMesa), sesion: null };
+      if (mesa.sesion) acceptSession(mesa.sesion);
       stopScanner();
-      onCheckedIn(mesa);
+      onCheckedIn(mesa.mesa);
       return true;
     } catch (checkinError) {
       setError(getErrorDetail(checkinError, 'No se pudo hacer check-in en esta mesa.'));
       setScannerState('error');
       return false;
     }
-  }, [onCheckedIn, stopScanner]);
+  }, [acceptSession, onCheckedIn, stopScanner]);
 
   const startScanner = useCallback(async (): Promise<void> => {
     stopScanner();
@@ -87,15 +95,15 @@ export function ScanQR({ onCheckedIn }: { onCheckedIn: (mesa: MesaSession) => vo
         videoRef.current,
         (result, _error, controls) => {
           if (!result || handledCodeRef.current) return;
-          const id = parseMesaQrPayload(result.getText());
-          if (!id) {
+          const target = parseMesaQrPayload(result.getText());
+          if (!target) {
             setError('Este código no pertenece a una mesa de UTTOF. Busca el QR ubicado sobre la mesa.');
             return;
           }
 
           handledCodeRef.current = true;
           controls.stop();
-          void handleCheckin(id).then((success) => {
+          void handleCheckin(target).then((success) => {
             if (!success) handledCodeRef.current = false;
           });
         },
@@ -203,26 +211,29 @@ export function ScanQR({ onCheckedIn }: { onCheckedIn: (mesa: MesaSession) => vo
             <div className="flex gap-2">
               <input
                 id="mesa-manual"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                placeholder="N.º de mesa"
-                value={mesaId}
+                type="text"
+                inputMode="text"
+                autoCapitalize="characters"
+                placeholder="Código de 12 caracteres"
+                value={mesaCode}
                 className="h-12 min-w-0 flex-1 rounded-md border-white/10 bg-white px-4 text-ink-900 focus:border-coral focus:ring-coral-50"
-                onChange={(event) => setMesaId(event.target.value)}
+                onChange={(event) => setMesaCode(event.target.value.toUpperCase())}
               />
               <button
                 type="button"
-                disabled={isBusy || Number(mesaId) < 1}
+                disabled={isBusy || !parseMesaQrPayload(mesaCode)}
                 className="flex min-h-12 items-center gap-2 rounded-md bg-coral px-4 text-sm font-semibold text-white disabled:opacity-60"
-                onClick={() => void handleCheckin(Number(mesaId))}
+                onClick={() => {
+                  const target = parseMesaQrPayload(mesaCode);
+                  if (target) void handleCheckin(target);
+                }}
               >
                 <CheckIcon size={15} />
                 Entrar
               </button>
             </div>
           </div>
-          <p className="text-center text-xs text-white/45">UTTOF · Av. La Mar 1234, Miraflores</p>
+          <p className="text-center text-xs text-white/45">UTTOF · {configQuery.data?.restaurante.direccion ?? 'Av. Larco 123, Miraflores, Lima'}</p>
         </footer>
       </div>
     </main>

@@ -2,11 +2,12 @@ import clsx from 'clsx';
 import { Clock3, Download, QrCode, ReceiptText, Table2, Users, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 import { mesaStatePresentation } from '@/components/mesas/mesaPresentation';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/format';
-import { createMesaQrPayload } from '@/lib/mesaQr';
+import { getMesaQr } from '@/api/mesas';
 import type { Mesa, MesaEstado } from '@/types/api';
 
 interface MesaDetailModalProps {
@@ -24,7 +25,11 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
   const [nextState, setNextState] = useState<MesaEstado>(mesa.estado);
   const state = mesaStatePresentation[mesa.estado];
   const hasChanges = nextState !== mesa.estado;
-  const qrPayload = createMesaQrPayload(mesa.id_mesa);
+  const qrQuery = useQuery({
+    queryKey: ['mesas', mesa.id_mesa, 'qr'],
+    queryFn: () => getMesaQr(mesa.id_mesa),
+  });
+  const qrPayload = qrQuery.data?.qr_url ?? '';
 
   useEffect(() => {
     setNextState(mesa.estado);
@@ -132,7 +137,7 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
             <span className="text-label uppercase text-ink-500">Tiempo en estado</span>
             <div className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-ink-900">
               <Clock3 aria-hidden="true" size={15} strokeWidth={1.8} />
-              {mesa.pedido_activo ? `${mesa.pedido_activo.tiempo_min} min` : 'No disponible'}
+              {mesa.pedido_activo ? `${mesa.pedido_activo.minutos} min` : 'No disponible'}
             </div>
           </div>
         </div>
@@ -143,7 +148,7 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
             <h3 className="font-serif text-base font-semibold text-ink-900">Pedido activo</h3>
           </div>
           {mesa.pedido_activo ? (
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-4">
               <div>
                 <span className="block text-label uppercase text-ink-500">Pedido</span>
                 <span className="mt-1 block text-sm font-semibold text-ink-900 tnum">#{mesa.pedido_activo.id_pedido}</span>
@@ -161,6 +166,10 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
                   {formatCurrency(mesa.pedido_activo.total)}
                 </span>
               </div>
+              <div>
+                <span className="block text-label uppercase text-ink-500">Progreso</span>
+                <span className="mt-1 block text-sm font-semibold text-ink-900">{mesa.pedido_activo.progreso}</span>
+              </div>
             </div>
           ) : (
             <p className="mt-3 text-sm text-ink-500">No hay un pedido activo asociado a esta mesa.</p>
@@ -174,26 +183,27 @@ export function MesaDetailModal({ mesa, isSubmitting, onClose, onSubmit }: MesaD
           </div>
           <div className="mt-4 grid items-center gap-4 sm:grid-cols-[148px_minmax(0,1fr)]">
             <div className="grid h-[148px] w-[148px] place-items-center rounded-md border border-[rgba(42,30,20,0.08)] bg-white p-2">
-              <QRCodeSVG
-                ref={qrRef}
-                aria-label={`Código QR de acceso para la mesa ${mesa.numero}`}
-                bgColor="#FFFFFF"
-                fgColor="#2A1E14"
-                level="M"
-                marginSize={1}
-                size={132}
-                title={`UTTOF Mesa ${mesa.numero}`}
-                value={qrPayload}
-              />
+              {qrPayload ? <QRCodeSVG
+                  ref={qrRef}
+                  aria-label={`Código QR de acceso para la mesa ${mesa.numero}`}
+                  bgColor="#FFFFFF"
+                  fgColor="#2A1E14"
+                  level="M"
+                  marginSize={1}
+                  size={132}
+                  title={`UTTOF Mesa ${mesa.numero}`}
+                  value={qrPayload}
+                /> : <span className="text-center text-xs text-ink-400">{qrQuery.isError ? 'No se pudo cargar' : 'Generando QR...'}</span>}
             </div>
             <div className="min-w-0">
               <p className="text-sm leading-5 text-ink-500">
-                Coloca este código en la mesa para que el comensal inicie su visita desde la app Cliente.
+                Coloca este código en la mesa para que el cliente inicie su visita desde la app Cliente.
               </p>
-              <code className="mt-2 block truncate rounded-sm bg-cream-100 px-2.5 py-2 text-xs text-ink-700">
-                {qrPayload}
-              </code>
-              <Button className="mt-3" type="button" variant="ghost" onClick={handleDownloadQr}>
+              <div className="mt-2 rounded-sm bg-cream-100 px-2.5 py-2">
+                <span className="block text-[10px] font-semibold uppercase text-ink-500">Código manual</span>
+                <code className="mt-1 block text-sm font-bold tracking-[0.08em] text-ink-900">{qrQuery.data?.codigo_corto ?? '------------'}</code>
+              </div>
+              <Button className="mt-3" type="button" variant="ghost" disabled={!qrPayload} onClick={handleDownloadQr}>
                 <Download aria-hidden="true" size={15} strokeWidth={1.8} />
                 Descargar SVG
               </Button>

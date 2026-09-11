@@ -31,9 +31,10 @@ export function Sidebar({ branchCount }: SidebarProps) {
   const { usuario, logout } = useAuth();
   const { sucursales } = useSucursal();
   const effectiveBranchCount = branchCount ?? sucursales.length;
+  const branchNoun = effectiveBranchCount === 1 ? 'sucursal' : 'sucursales';
   const initials = usuario ? getInitials(usuario.nombre) : 'UT';
   const branchLabel = effectiveBranchCount
-    ? `${roleLabels[usuario?.rol ?? 'admin']} · ${effectiveBranchCount} sucursales`
+    ? `${roleLabels[usuario?.rol ?? 'admin']} · ${effectiveBranchCount} ${branchNoun}`
     : roleLabels[usuario?.rol ?? 'admin'];
   const isBranchManager = usuario?.rol === 'gerente_sucursal';
 

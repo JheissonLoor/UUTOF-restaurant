@@ -6,15 +6,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.client import get_session
 from app.entidad.mesa.aplicacion.actualizar_estado_mesa import actualizar_estado_mesa
 from app.entidad.mesa.aplicacion.checkin_mesa import checkin_mesa
+from app.entidad.mesa.aplicacion.checkin_qr import checkin_qr
 from app.entidad.mesa.aplicacion.listar_mesas import listar_mesas
 from app.entidad.mesa.aplicacion.sentar_comensales import sentar_comensales
+from app.entidad.mesa.aplicacion.obtener_qr_mesa import obtener_qr_mesa
 from app.entidad.mesa.infraestructura.schemas import (
     MesaEstadoPatchRequest,
     MesaPublica,
     SentarComensalesRequest,
     SentarComensalesResponse,
+    MesaQrCheckinRequest,
+    MesaQrCheckinResponse,
+    MesaQrResponse,
 )
-from app.utilidad.rbac.infraestructura.deps import requires
+from app.utilidad.rbac.infraestructura.deps import optional_actor, requires
 
 
 router = APIRouter(prefix="/v1/mesas", tags=["Mesas"])
@@ -37,6 +42,24 @@ async def get_mesas(
     if actor["rol"] == "cliente":
         return [mesa.model_copy(update={"pedido_activo": None}) for mesa in mesas]
     return mesas
+
+
+@router.post("/checkin/qr", response_model=MesaQrCheckinResponse)
+async def post_checkin_qr(
+    data: MesaQrCheckinRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict | None = Depends(optional_actor),
+) -> MesaQrCheckinResponse:
+    return await checkin_qr(session, data.token_o_codigo, actor)
+
+
+@router.get("/{id}/qr", response_model=MesaQrResponse)
+async def get_qr_mesa(
+    id: int,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("admin")),
+) -> MesaQrResponse:
+    return await obtener_qr_mesa(session, id)
 
 
 @router.patch("/{id}/estado", response_model=MesaPublica)

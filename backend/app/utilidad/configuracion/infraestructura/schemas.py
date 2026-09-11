@@ -49,6 +49,28 @@ class ConfiguracionResponse(BaseModel):
     seguridad: SeguridadConfig
 
 
+class RestaurantePublico(BaseModel):
+    nombre_comercial: str
+    direccion: str
+    telefono: str
+    email: str
+    timezone: Literal["America/Lima"]
+    moneda: Literal["PEN"]
+    horario_apertura: str
+    horario_cierre: str
+
+
+class PagosPublicos(BaseModel):
+    acepta_efectivo: bool
+    acepta_tarjeta: bool
+    acepta_yape: bool
+
+
+class ConfiguracionPublicaResponse(BaseModel):
+    restaurante: RestaurantePublico
+    pagos: PagosPublicos
+
+
 class RestaurantePatch(BaseModel):
     nombre_comercial: str | None = Field(default=None, min_length=2, max_length=120)
     ruc: str | None = Field(default=None, pattern=r"^\d{11}$")

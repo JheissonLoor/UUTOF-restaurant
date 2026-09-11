@@ -20,6 +20,12 @@ export const mesaStatePresentation: Record<MesaEstado, MesaStatePresentation> = 
     iconClasses: 'bg-white/75 text-terracotta-600',
     dotClasses: 'bg-terracotta-500',
   },
+  lista: {
+    label: 'Lista para servir',
+    cardClasses: 'border-sky-500 bg-sky-100/70 hover:bg-sky-100',
+    iconClasses: 'bg-white/75 text-sky-500',
+    dotClasses: 'bg-sky-500',
+  },
   reservada: {
     label: 'Reservada',
     cardClasses: 'border-saffron-500 bg-saffron-100/70 hover:bg-saffron-100',

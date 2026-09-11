@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.client import get_session
 from app.utilidad.auth.aplicacion.iniciar_sesion import iniciar_sesion
+from app.utilidad.auth.aplicacion.convertir_invitado import convertir_invitado
 from app.utilidad.auth.aplicacion.refrescar_token import refrescar_token
 from app.utilidad.auth.aplicacion.registrar_usuario import registrar_usuario
 from app.utilidad.auth.infraestructura.schemas import (
@@ -13,6 +14,8 @@ from app.utilidad.auth.infraestructura.schemas import (
     TokenResponse,
     UsuarioPublico,
 )
+from app.utilidad.rbac.infraestructura.deps import requires
+from typing import Any
 
 
 router = APIRouter(prefix="/v1/auth", tags=["Auth"])
@@ -31,3 +34,12 @@ async def login(data: LoginRequest, session: AsyncSession = Depends(get_session)
 @router.post("/refresh", response_model=RefreshResponse)
 async def refresh(data: RefreshRequest, session: AsyncSession = Depends(get_session)) -> RefreshResponse:
     return await refrescar_token(session, data)
+
+
+@router.post("/guest/upgrade", response_model=TokenResponse)
+async def upgrade_guest(
+    data: RegisterRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict[str, Any] = Depends(requires("cliente")),
+) -> TokenResponse:
+    return await convertir_invitado(session, data, actor)

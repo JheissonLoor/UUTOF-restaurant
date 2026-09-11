@@ -137,6 +137,17 @@ export interface CuentaResponse {
   total: number;
 }
 
+export interface Reserva {
+  id_reserva: number;
+  folio: string;
+  nombre_cliente: string;
+  id_mesa: number;
+  hora_reserva: string;
+  num_personas: number;
+  estado: 'confirmada' | 'validada' | 'cancelada' | 'completada';
+  qr_url: string;
+}
+
 export type WSEvent =
   | { tipo: 'pedido.listo'; id_pedido: number; id_mesa: number }
   | { tipo: 'pedido.item_listo'; id_pedido: number; id_detalle: number }

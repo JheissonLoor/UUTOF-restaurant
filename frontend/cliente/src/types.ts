@@ -7,8 +7,10 @@ export type MetodoPago = 'tarjeta' | 'yape' | 'efectivo';
 export interface UsuarioSesion {
   id_usuario: number;
   nombre: string;
-  email: string;
+  email: string | null;
   rol: UserRole;
+  telefono?: string | null;
+  es_invitado: boolean;
 }
 
 export interface LoginRequest {
@@ -41,6 +43,13 @@ export interface MesaSession {
   numero: number;
   zona: string;
   capacidad: number;
+  estado?: MesaEstado;
+}
+
+export type MesaEstado = 'libre' | 'ocupada' | 'reservada' | 'limpieza' | 'lista';
+
+export interface MesaPublica extends MesaSession {
+  estado: MesaEstado;
 }
 
 export interface Categoria {
@@ -101,6 +110,7 @@ export interface PedidoItem {
 export interface PedidoPublico {
   id_pedido: number;
   id_mesa: number;
+  creado_en: string;
   estado: PedidoEstado;
   comensales: number;
   total: number;
@@ -123,12 +133,53 @@ export interface PagoResponse {
 
 export interface ReservaPublica {
   id_reserva: number;
+  folio: string;
   id_usuario?: number | null;
   nombre_cliente: string;
   id_mesa: number;
   hora_reserva: string;
   num_personas: number;
   notas_especiales?: string | null;
+  estado: 'confirmada' | 'validada' | 'cancelada' | 'completada';
+  qr_url: string;
+  creado_en: string;
+}
+
+export interface ReservaDisponibilidad {
+  id_mesa: number;
+  hora_reserva: string;
+}
+
+export interface MesaQrCheckinResponse {
+  mesa: MesaSession;
+  sesion: TokenResponse;
+}
+
+export type DietaCliente = 'sin_restricciones' | 'vegetariana' | 'vegana' | 'sin_gluten';
+export type CocinaFavorita = 'criolla' | 'marina' | 'parrilla' | 'chifa' | 'nikkei' | 'postres' | 'vegetariana' | 'picante';
+
+export interface PreferenciasCliente {
+  dieta: DietaCliente;
+  cocinas: CocinaFavorita[];
+  actualizado_en?: string | null;
+}
+
+export interface ConfiguracionPublica {
+  restaurante: {
+    nombre_comercial: string;
+    direccion: string;
+    telefono: string;
+    email: string;
+    timezone: 'America/Lima';
+    moneda: 'PEN';
+    horario_apertura: string;
+    horario_cierre: string;
+  };
+  pagos: {
+    acepta_efectivo: boolean;
+    acepta_tarjeta: boolean;
+    acepta_yape: boolean;
+  };
 }
 
 export type WSEvent =

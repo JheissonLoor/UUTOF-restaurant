@@ -8,7 +8,7 @@ import type { MetodoPago, PedidoPublico } from '@/types';
 
 const methods: Array<{ id: MetodoPago; label: string; detail: string }> = [
   { id: 'tarjeta', label: 'Tarjeta', detail: 'Crédito o débito' },
-  { id: 'yape', label: 'Yape / QR', detail: 'Escanea y confirma' },
+  { id: 'yape', label: 'Yape', detail: 'Confirma el pago en UTTOF' },
   { id: 'efectivo', label: 'Efectivo', detail: 'Paga al mesero' },
 ];
 
@@ -135,11 +135,8 @@ export function Checkout({ pedido, onClose, onFinished }: { pedido: PedidoPublic
               </div>
 
               {method === 'yape' ? (
-                <div className="mt-4 grid place-items-center rounded-xl bg-cream-bg p-5">
-                  <div className="grid h-32 w-32 grid-cols-5 gap-1 rounded-md bg-white p-3 shadow-soft">
-                    {Array.from({ length: 25 }).map((_, index) => <span key={index} className={(index * 5 + 2) % 3 === 0 ? 'bg-ink-900' : 'bg-ink-900/10'} />)}
-                  </div>
-                  <p className="mt-3 text-sm font-semibold text-ink-700">Escanea y confirma en Yape</p>
+                <div className="mt-4 rounded-md bg-mint-50 px-4 py-3 text-sm leading-6 text-mint-600">
+                  El pago se registra con el folio de tu cuenta. UTTOF no muestra códigos QR de Yape simulados.
                 </div>
               ) : null}
 

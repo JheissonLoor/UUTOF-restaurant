@@ -21,11 +21,12 @@ async def crear_pedido_cliente(
     if mesa["estado"] not in {"ocupada", "lista"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Debes hacer check-in antes de pedir")
 
-    pedido_base = await repo.obtener_pedido_abierto_por_mesa(session, data.id_mesa)
+    id_cliente = int(actor["sub"])
+    pedido_base = await repo.obtener_pedido_abierto_por_mesa(session, data.id_mesa, id_cliente)
     pedido_es_nuevo = pedido_base is None
     id_pedido = int(pedido_base["id_pedido"]) if pedido_base else await repo.crear_pedido_base_cliente(
         session,
-        int(actor["sub"]),
+        id_cliente,
         data.id_mesa,
     )
 

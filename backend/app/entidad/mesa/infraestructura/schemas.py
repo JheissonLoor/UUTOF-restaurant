@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Literal
 
 from app.entidad.mesa.dominio.mesa import EstadoMesa
+from app.utilidad.auth.infraestructura.schemas import TokenResponse
 
 
 class PedidoActivoMesa(BaseModel):
@@ -36,3 +37,19 @@ class SentarComensalesRequest(BaseModel):
 
 class SentarComensalesResponse(BaseModel):
     id_pedido: int
+
+
+class MesaQrCheckinRequest(BaseModel):
+    token_o_codigo: str = Field(min_length=8, max_length=128)
+
+
+class MesaQrResponse(BaseModel):
+    id_mesa: int
+    numero: int
+    qr_url: str
+    codigo_corto: str
+
+
+class MesaQrCheckinResponse(BaseModel):
+    mesa: MesaPublica
+    sesion: TokenResponse

@@ -149,6 +149,39 @@ async def obtener_mesa_base(session: AsyncSession, id_mesa: int) -> dict[str, An
     return dict(row._mapping) if row is not None else None
 
 
+async def obtener_mesa_por_qr(session: AsyncSession, token_o_codigo: str) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_mesa
+            FROM mesa
+            WHERE qr_token = :valor
+               OR qr_codigo_corto = UPPER(:valor)
+            LIMIT 1
+            """
+        ),
+        {"valor": token_o_codigo.strip()},
+    )
+    id_mesa = result.scalar_one_or_none()
+    return await obtener_mesa(session, int(id_mesa)) if id_mesa is not None else None
+
+
+async def obtener_datos_qr(session: AsyncSession, id_mesa: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT id_mesa, numero, qr_token, qr_codigo_corto
+            FROM mesa
+            WHERE id_mesa = :id_mesa
+            LIMIT 1
+            """
+        ),
+        {"id_mesa": id_mesa},
+    )
+    row = result.first()
+    return dict(row._mapping) if row is not None else None
+
+
 async def crear_pedido_para_mesa(
     session: AsyncSession,
     *,

@@ -10,6 +10,7 @@ from app.entidad.pedido.aplicacion.crear_pedido_cliente import crear_pedido_clie
 from app.entidad.pedido.aplicacion.entregar_item import entregar_item
 from app.entidad.pedido.aplicacion.generar_cuenta import generar_cuenta
 from app.entidad.pedido.aplicacion.listar_pedidos_cocina import listar_pedidos_cocina
+from app.entidad.pedido.aplicacion.listar_pedidos_propios import listar_pedidos_propios
 from app.entidad.pedido.aplicacion.marcar_item_cocina import marcar_item_cocina
 from app.entidad.pedido.aplicacion.obtener_pedido import obtener_pedido
 from app.entidad.pedido.aplicacion.notificar_cocina import notificar_cocina
@@ -50,6 +51,14 @@ async def get_pedidos_cocina(
 ) -> list[PedidoCocinaResponse]:
     _ = actor
     return await listar_pedidos_cocina(session, estado)
+
+
+@router.get("/mios", response_model=list[PedidoPublico])
+async def get_pedidos_propios(
+    session: AsyncSession = Depends(get_session),
+    actor: dict[str, Any] = Depends(requires("cliente")),
+) -> list[PedidoPublico]:
+    return await listar_pedidos_propios(session, actor)
 
 
 @router.patch("/{id_pedido}/estado", response_model=PedidoCocinaResponse)

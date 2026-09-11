@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react';
+import { QrCode, Search } from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { Mesa } from '@/types/api';
@@ -8,6 +8,7 @@ interface TopbarProps {
   mesas: Mesa[];
   searchTerm: string;
   onSearchChange: (value: string) => void;
+  onValidateReservation?: () => void;
 }
 
 function displayName(fullName: string): string {
@@ -26,7 +27,7 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function Topbar({ meseroNombre, mesas, searchTerm, onSearchChange }: TopbarProps): JSX.Element {
+export function Topbar({ meseroNombre, mesas, searchTerm, onSearchChange, onValidateReservation }: TopbarProps): JSX.Element {
   const stats = useMemo(() => {
     const ventas = mesas.reduce((total, mesa) => total + (mesa.pedido_activo?.total ?? 0), 0);
     const activas = mesas.filter((mesa) => mesa.estado === 'ocupada' || mesa.estado === 'lista').length;
@@ -75,6 +76,9 @@ export function Topbar({ meseroNombre, mesas, searchTerm, onSearchChange }: Topb
           onChange={(event) => onSearchChange(event.target.value)}
         />
       </div>
+      <button type="button" className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-ink-900 px-4 text-sm font-semibold text-white" onClick={onValidateReservation}>
+        <QrCode aria-hidden="true" size={17} /> Validar reserva
+      </button>
     </header>
   );
 }

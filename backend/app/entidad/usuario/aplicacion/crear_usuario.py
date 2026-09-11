@@ -21,6 +21,7 @@ async def crear_usuario(
             telefono=data.telefono,
             password_hash=auth_service.hash_password(data.password),
             rol=data.rol,
+            id_sucursal=data.id_sucursal,
         )
     except IntegrityError as exc:
         await session.rollback()

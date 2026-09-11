@@ -19,10 +19,17 @@ async def actualizar_estado_mesa(
             detail=str(exc),
         ) from exc
 
-    if not await repo.obtener_mesa(session, id_mesa):
+    mesa_actual = await repo.obtener_mesa(session, id_mesa)
+    if not mesa_actual:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Mesa no encontrada",
+        )
+
+    if data.estado == "libre" and mesa_actual.get("pedido_activo") is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="La mesa tiene un pedido pendiente de cierre",
         )
 
     mesa = await repo.actualizar_estado_mesa(session, id_mesa, data.estado)

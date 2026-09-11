@@ -15,6 +15,7 @@ interface MesasViewProps {
   meseroNombre: string;
   onOpenMesa?: (mesa: Mesa) => void;
   onSeatMesa?: (mesa: Mesa) => void;
+  onValidateReservation?: () => void;
 }
 
 function matchesFilter(mesa: Mesa, filter: MesaFilter): boolean {
@@ -68,7 +69,7 @@ function MesaGridSkeleton(): JSX.Element {
   );
 }
 
-export function MesasView({ meseroNombre, onOpenMesa, onSeatMesa }: MesasViewProps): JSX.Element {
+export function MesasView({ meseroNombre, onOpenMesa, onSeatMesa, onValidateReservation }: MesasViewProps): JSX.Element {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<MesaFilter>('todas');
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,7 +107,7 @@ export function MesasView({ meseroNombre, onOpenMesa, onSeatMesa }: MesasViewPro
 
   return (
     <main className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-cream-50 text-ink-900" data-screen-label="01 Mesas">
-      <Topbar meseroNombre={meseroNombre} mesas={mesas} searchTerm={searchTerm} onSearchChange={setSearchTerm} />
+      <Topbar meseroNombre={meseroNombre} mesas={mesas} searchTerm={searchTerm} onSearchChange={setSearchTerm} onValidateReservation={onValidateReservation} />
       <FilterTabs activeFilter={activeFilter} mesas={mesas} onChange={setActiveFilter} />
 
       <section className="scrollbar-none flex-1 overflow-y-auto px-4 pb-24 pt-1" aria-live="polite">

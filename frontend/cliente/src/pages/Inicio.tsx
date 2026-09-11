@@ -5,21 +5,20 @@ import { ArrowIcon, BagIcon, CalendarIcon, MenuIcon, SparkIcon } from '@/compone
 import { formatCurrency, greeting } from '@/lib/format';
 import type { AppTab, Dish } from '@/types';
 
-export function Inicio({ onTabChange, onAddDish }: { onTabChange: (tab: AppTab) => void; onAddDish: (dish: Dish) => void }): JSX.Element {
+export function Inicio({ nombre, onTabChange, onAddDish }: { nombre: string | null; onTabChange: (tab: AppTab) => void; onAddDish: (dish: Dish) => void }): JSX.Element {
   const dishesQuery = useQuery({ queryKey: ['cliente', 'dishes'], queryFn: getDishes });
   const featured = (dishesQuery.data ?? []).slice(0, 4);
 
   return (
     <div className="space-y-6" data-screen-label="02 Inicio">
       <section className="relative overflow-hidden rounded-2xl bg-ink-900 p-5 text-white shadow-soft">
-        <div className="absolute right-[-46px] top-[-46px] h-36 w-36 rounded-full bg-coral/40 blur-2xl" />
         <div className="relative">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/80">
             <span className="h-2 w-2 rounded-full bg-mint" />
             {greeting()}
           </span>
           <h1 className="mt-4 font-serif text-[34px] font-semibold leading-[1.04]">
-            Hola, comensal
+            Hola, {nombre?.split(' ')[0] ?? 'cliente'}
             <br />
             bienvenido a UTTOF
           </h1>

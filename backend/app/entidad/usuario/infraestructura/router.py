@@ -6,17 +6,37 @@ from app.entidad.usuario.aplicacion.actualizar_usuario import actualizar_usuario
 from app.entidad.usuario.aplicacion.crear_usuario import crear_usuario
 from app.entidad.usuario.aplicacion.listar_usuarios import listar_usuarios
 from app.entidad.usuario.aplicacion.obtener_usuario import obtener_usuario
+from app.entidad.usuario.aplicacion.preferencias import guardar_preferencias, obtener_preferencias
 from app.entidad.usuario.infraestructura.schemas import (
     RolUsuario,
     UsuarioCreateRequest,
     UsuarioPatchRequest,
     UsuarioPublico,
     UsuariosPage,
+    PreferenciasCliente,
+    PreferenciasClienteRequest,
 )
 from app.utilidad.rbac.infraestructura.deps import requires
 
 
 router = APIRouter(prefix="/v1/usuarios", tags=["Usuarios"])
+
+
+@router.get("/me/preferencias", response_model=PreferenciasCliente)
+async def get_preferencias(
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("cliente")),
+) -> PreferenciasCliente:
+    return await obtener_preferencias(session, actor)
+
+
+@router.put("/me/preferencias", response_model=PreferenciasCliente)
+async def put_preferencias(
+    data: PreferenciasClienteRequest,
+    session: AsyncSession = Depends(get_session),
+    actor: dict = Depends(requires("cliente")),
+) -> PreferenciasCliente:
+    return await guardar_preferencias(session, data, actor)
 
 
 @router.get("", response_model=UsuariosPage)

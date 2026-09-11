@@ -16,19 +16,24 @@ interface CartState {
 
 interface CartDrawerProps {
   open: boolean;
-  mesa: MesaSession;
+  mesa: MesaSession | null;
   cart: CartState;
   onClose: () => void;
   onSent: (pedido: PedidoCreateResponse) => void;
+  onNeedMesa: () => void;
 }
 
-export function CartDrawer({ open, mesa, cart, onClose, onSent }: CartDrawerProps): JSX.Element | null {
+export function CartDrawer({ open, mesa, cart, onClose, onSent, onNeedMesa }: CartDrawerProps): JSX.Element | null {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
 
   async function handleSend(): Promise<void> {
+    if (!mesa) {
+      onNeedMesa();
+      return;
+    }
     setError(null);
     setIsSending(true);
     try {
@@ -53,7 +58,7 @@ export function CartDrawer({ open, mesa, cart, onClose, onSent }: CartDrawerProp
           </div>
           <div className="flex-1">
             <h2 className="font-serif text-xl font-semibold text-ink-900">Tu pedido</h2>
-            <p className="text-xs text-ink-500">Mesa {mesa.numero} · postpago al final</p>
+            <p className="text-xs text-ink-500">{mesa ? `Mesa ${mesa.numero} · postpago al final` : 'Escanea una mesa para enviar a cocina'}</p>
           </div>
           <button type="button" className="grid h-11 w-11 place-items-center rounded-sm bg-cream-bg2 text-ink-500" onClick={onClose}>
             <CloseIcon size={18} />
@@ -107,7 +112,7 @@ export function CartDrawer({ open, mesa, cart, onClose, onSent }: CartDrawerProp
             onClick={() => void handleSend()}
           >
             <FlameIcon size={16} />
-            {isSending ? 'Enviando...' : 'Enviar a cocina'}
+            {isSending ? 'Enviando...' : mesa ? 'Enviar a cocina' : 'Escanear mesa para enviar'}
           </button>
         </footer>
       </aside>

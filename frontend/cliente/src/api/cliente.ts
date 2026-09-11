@@ -2,15 +2,20 @@ import { apiClient } from '@/api/client';
 import type {
   CartItem,
   Categoria,
+  ConfiguracionPublica,
   CuentaResponse,
   Dish,
   MesaSession,
+  MesaPublica,
+  MesaQrCheckinResponse,
   MetodoPago,
   PagoResponse,
   PedidoCreateResponse,
   PedidoPublico,
   PlatillosPage,
   ReservaPublica,
+  ReservaDisponibilidad,
+  PreferenciasCliente,
 } from '@/types';
 
 const fallbackImages = [
@@ -30,6 +35,18 @@ const descriptions = [
 
 export async function checkinMesa(idMesa: number): Promise<MesaSession> {
   const response = await apiClient.post<MesaSession>(`/mesas/${idMesa}/checkin`);
+  return response.data;
+}
+
+export async function checkinMesaQr(tokenOCodigo: string): Promise<MesaQrCheckinResponse> {
+  const response = await apiClient.post<MesaQrCheckinResponse>('/mesas/checkin/qr', {
+    token_o_codigo: tokenOCodigo,
+  });
+  return response.data;
+}
+
+export async function getMesas(): Promise<MesaPublica[]> {
+  const response = await apiClient.get<MesaPublica[]>('/mesas');
   return response.data;
 }
 
@@ -74,6 +91,11 @@ export async function getPedido(idPedido: number): Promise<PedidoPublico> {
   return response.data;
 }
 
+export async function getMisPedidos(): Promise<PedidoPublico[]> {
+  const response = await apiClient.get<PedidoPublico[]>('/pedidos/mios');
+  return response.data;
+}
+
 export async function pedirCuenta(idPedido: number): Promise<CuentaResponse> {
   const response = await apiClient.post<CuentaResponse>(`/pedidos/${idPedido}/cuenta`);
   return response.data;
@@ -94,13 +116,36 @@ export async function registrarPago(
   return response.data;
 }
 
-export async function getReservas(fecha: string): Promise<ReservaPublica[]> {
-  const response = await apiClient.get<ReservaPublica[]>('/reservas', { params: { fecha } });
+export async function getDisponibilidadReservas(fecha: string): Promise<ReservaDisponibilidad[]> {
+  const response = await apiClient.get<ReservaDisponibilidad[]>('/reservas/disponibilidad', { params: { fecha } });
   return response.data;
 }
 
 export async function crearReserva(payload: { id_mesa: number; hora_reserva: string; num_personas: number; notas?: string }): Promise<ReservaPublica> {
   const response = await apiClient.post<ReservaPublica>('/reservas', payload);
+  return response.data;
+}
+
+export async function getMisReservas(): Promise<ReservaPublica[]> {
+  const response = await apiClient.get<ReservaPublica[]>('/reservas/mias');
+  return response.data;
+}
+
+export async function getPreferencias(): Promise<PreferenciasCliente> {
+  const response = await apiClient.get<PreferenciasCliente>('/usuarios/me/preferencias');
+  return response.data;
+}
+
+export async function savePreferencias(payload: PreferenciasCliente): Promise<PreferenciasCliente> {
+  const response = await apiClient.put<PreferenciasCliente>('/usuarios/me/preferencias', {
+    dieta: payload.dieta,
+    cocinas: payload.cocinas,
+  });
+  return response.data;
+}
+
+export async function getConfiguracionPublica(): Promise<ConfiguracionPublica> {
+  const response = await apiClient.get<ConfiguracionPublica>('/configuracion/publica');
   return response.data;
 }
 

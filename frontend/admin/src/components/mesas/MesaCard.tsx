@@ -47,7 +47,7 @@ export function MesaCard({ mesa, onOpen }: MesaCardProps): JSX.Element {
           <>
             <span className="inline-flex items-center gap-1.5">
               <Clock3 aria-hidden="true" size={14} strokeWidth={1.8} />
-              {mesa.pedido_activo.tiempo_min} min
+              {mesa.pedido_activo.minutos} min
             </span>
             <span className="ml-auto font-semibold text-ink-900 tnum">{formatCurrency(mesa.pedido_activo.total)}</span>
           </>

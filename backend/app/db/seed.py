@@ -1,4 +1,5 @@
 import asyncio
+import secrets
 from decimal import Decimal
 
 from passlib.context import CryptContext
@@ -20,6 +21,7 @@ async def seed() -> None:
             ("admin@uttof.mx", "admin@uttof.pe"),
             ("mesero@uttof.mx", "mesero@uttof.pe"),
             ("cocina@uttof.mx", "cocina@uttof.pe"),
+            ("cliente@uttof.mx", "cliente@uttof.pe"),
         ]
         for old_email, new_email in email_migrations:
             await session.execute(
@@ -34,20 +36,31 @@ async def seed() -> None:
             )
 
         users = [
-            ("Administrador UTTOF", "admin@uttof.pe", "admin123", "admin"),
-            ("Mesero UTTOF", "mesero@uttof.pe", "mesero123", "mesero"),
-            ("Cocina UTTOF", "cocina@uttof.pe", "cocina123", "cocina"),
+            ("Administrador UTTOF", "admin@uttof.pe", "admin123", "admin", None),
+            ("Dueno UTTOF", "dueno@uttof.pe", "dueno123", "dueno", None),
+            ("Gerente Miraflores", "gerente.miraflores@uttof.pe", "gerente123", "gerente_sucursal", 1),
+            ("Gerente Barranco", "gerente.barranco@uttof.pe", "gerente123", "gerente_sucursal", 2),
+            ("Gerente San Isidro", "gerente.sanisidro@uttof.pe", "gerente123", "gerente_sucursal", 3),
+            ("Mesero Miraflores", "mesero@uttof.pe", "mesero123", "mesero", 1),
+            ("Cocina Miraflores", "cocina@uttof.pe", "cocina123", "cocina", 1),
+            ("Mesero Barranco", "mesero.barranco@uttof.pe", "mesero123", "mesero", 2),
+            ("Cocina Barranco", "cocina.barranco@uttof.pe", "cocina123", "cocina", 2),
+            ("Mesero San Isidro", "mesero.sanisidro@uttof.pe", "mesero123", "mesero", 3),
+            ("Cocina San Isidro", "cocina.sanisidro@uttof.pe", "cocina123", "cocina", 3),
+            ("Cliente UTTOF", "cliente@uttof.pe", "cliente123", "cliente", None),
         ]
-        for nombre, email, password, rol in users:
+        for nombre, email, password, rol, id_sucursal in users:
             await session.execute(
                 text(
                     """
-                    INSERT INTO usuario (nombre, email, password_hash, rol)
-                    VALUES (:nombre, :email, :password_hash, :rol)
+                    INSERT INTO usuario (nombre, email, password_hash, rol, id_sucursal, activo)
+                    VALUES (:nombre, :email, :password_hash, :rol, :id_sucursal, TRUE)
                     ON DUPLICATE KEY UPDATE
                       nombre = VALUES(nombre),
                       password_hash = VALUES(password_hash),
-                      rol = VALUES(rol)
+                      rol = VALUES(rol),
+                      id_sucursal = VALUES(id_sucursal),
+                      activo = TRUE
                     """
                 ),
                 {
@@ -55,6 +68,7 @@ async def seed() -> None:
                     "email": email,
                     "password_hash": hash_password(password),
                     "rol": rol,
+                    "id_sucursal": id_sucursal,
                 },
             )
 
@@ -113,27 +127,42 @@ async def seed() -> None:
                 },
             )
 
-        mesero_result = await session.execute(
-            text("SELECT id_usuario FROM usuario WHERE email = 'mesero@uttof.pe' LIMIT 1")
+        meseros_result = await session.execute(
+            text(
+                """
+                SELECT id_usuario, id_sucursal
+                FROM usuario
+                WHERE email IN (
+                  'mesero@uttof.pe',
+                  'mesero.barranco@uttof.pe',
+                  'mesero.sanisidro@uttof.pe'
+                )
+                """
+            )
         )
-        mesero_id = int(mesero_result.scalar_one())
+        mesero_id_by_sucursal = {
+            int(row.id_sucursal): int(row.id_usuario)
+            for row in meseros_result.all()
+        }
 
         mesas = [
-            (1, 4, "terraza", "ocupada", mesero_id),
-            (2, 2, "terraza", "lista", mesero_id),
-            (3, 6, "salon", "ocupada", mesero_id),
-            (4, 4, "salon", "libre", mesero_id),
-            (5, 2, "barra", "ocupada", mesero_id),
-            (6, 4, "salon", "libre", mesero_id),
-            (7, 8, "privado", "libre", None),
-            (8, 10, "salon", "limpieza", None),
+            (1, 1, 4, "terraza", "ocupada", mesero_id_by_sucursal[1]),
+            (1, 2, 2, "terraza", "lista", mesero_id_by_sucursal[1]),
+            (1, 3, 6, "salon", "ocupada", mesero_id_by_sucursal[1]),
+            (2, 4, 4, "salon", "libre", mesero_id_by_sucursal[2]),
+            (2, 5, 2, "barra", "ocupada", mesero_id_by_sucursal[2]),
+            (2, 6, 4, "salon", "libre", mesero_id_by_sucursal[2]),
+            (3, 7, 8, "privado", "libre", mesero_id_by_sucursal[3]),
+            (3, 8, 10, "salon", "limpieza", mesero_id_by_sucursal[3]),
         ]
-        for numero, capacidad, zona, estado, id_mesero in mesas:
+        for id_sucursal, numero, capacidad, zona, estado, id_mesero in mesas:
             await session.execute(
                 text(
                     """
-                    INSERT INTO mesa (numero, capacidad, zona, estado, id_mesero)
-                    VALUES (:numero, :capacidad, :zona, :estado, :id_mesero)
+                    INSERT INTO mesa
+                      (id_sucursal, numero, capacidad, zona, estado, id_mesero, qr_token, qr_codigo_corto)
+                    VALUES
+                      (:id_sucursal, :numero, :capacidad, :zona, :estado, :id_mesero, :qr_token, :qr_codigo_corto)
                     ON DUPLICATE KEY UPDATE
                       capacidad = VALUES(capacidad),
                       zona = VALUES(zona),
@@ -142,11 +171,14 @@ async def seed() -> None:
                     """
                 ),
                 {
+                    "id_sucursal": id_sucursal,
                     "numero": numero,
                     "capacidad": capacidad,
                     "zona": zona,
                     "estado": estado,
                     "id_mesero": id_mesero,
+                    "qr_token": secrets.token_hex(32),
+                    "qr_codigo_corto": secrets.token_hex(6).upper(),
                 },
             )
 
@@ -200,6 +232,8 @@ async def seed() -> None:
 
         for pedido_demo in pedidos_demo:
             id_mesa = mesa_id_by_numero[pedido_demo["mesa"]]
+            id_sucursal = 1 if pedido_demo["mesa"] <= 3 else 2 if pedido_demo["mesa"] <= 6 else 3
+            mesero_id = mesero_id_by_sucursal[id_sucursal]
             pedido_result = await session.execute(
                 text(
                     """
@@ -286,6 +320,27 @@ async def seed() -> None:
                         "estado_item": estado_item,
                     },
                 )
+
+        await session.execute(
+            text(
+                """
+                UPDATE mesa m
+                INNER JOIN pedido p
+                  ON p.id_pedido = (
+                    SELECT p2.id_pedido
+                    FROM pedido p2
+                    WHERE p2.id_mesa = m.id_mesa
+                      AND p2.estado IN ('creado', 'en_cocina', 'listo', 'entregado')
+                    ORDER BY p2.creado_en DESC, p2.id_pedido DESC
+                    LIMIT 1
+                  )
+                SET m.estado = CASE
+                  WHEN p.estado = 'listo' THEN 'lista'
+                  ELSE 'ocupada'
+                END
+                """
+            )
+        )
 
         await session.commit()
 

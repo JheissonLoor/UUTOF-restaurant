@@ -165,7 +165,9 @@ export function BranchPerfTable({ branches = [], total, loading = false }: Branc
                   <span className="flex h-8 w-8 items-center justify-center rounded-card bg-ink text-xs text-white">Σ</span>
                   <div>
                     <strong className="block text-ink">Red completa</strong>
-                    <span className="text-[11px] font-normal text-ink4">{branches.length} sucursales</span>
+                    <span className="text-[11px] font-normal text-ink4">
+                      {branches.length} {branches.length === 1 ? 'sucursal' : 'sucursales'}
+                    </span>
                   </div>
                 </div>
               </td>

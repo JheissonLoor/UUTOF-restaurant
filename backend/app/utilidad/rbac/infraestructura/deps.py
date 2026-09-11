@@ -45,3 +45,13 @@ def requires(*roles: str) -> Callable[..., dict[str, Any]]:
         return payload
 
     return dependency
+
+
+async def optional_actor(authorization: str | None = Header(default=None)) -> dict[str, Any] | None:
+    if not authorization:
+        return None
+    raw_token = _bearer_token(authorization)
+    try:
+        return token.verify(raw_token, token_type="access")
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalido") from exc

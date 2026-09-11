@@ -38,5 +38,7 @@ async def registrar_usuario(
         id_usuario=usuario["id_usuario"],
         nombre=usuario["nombre"],
         email=usuario["email"],
+        telefono=usuario["telefono"],
         rol=usuario["rol"],
+        es_invitado=False,
     )

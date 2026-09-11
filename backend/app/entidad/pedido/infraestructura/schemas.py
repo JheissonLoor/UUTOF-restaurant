@@ -19,6 +19,7 @@ class PedidoItemPublico(BaseModel):
 class PedidoPublico(BaseModel):
     id_pedido: int
     id_mesa: int
+    creado_en: str
     estado: Literal["creado", "en_cocina", "listo", "entregado", "pagado", "cancelado"]
     comensales: int
     total: float

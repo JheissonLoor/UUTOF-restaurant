@@ -27,7 +27,9 @@ export function ConsolidadoView() {
   const subtitle = useMemo(() => {
     const date = dateFormatter.format(new Date());
     const branches = query.data?.por_sucursal.length;
-    return `${date.charAt(0).toUpperCase()}${date.slice(1)} · ${branches ?? '—'} sucursales activas · Lima`;
+    const branchCount = branches ?? null;
+    const branchLabel = branchCount === 1 ? 'sucursal activa' : 'sucursales activas';
+    return `${date.charAt(0).toUpperCase()}${date.slice(1)} · ${branchCount ?? '—'} ${branchLabel} · Lima`;
   }, [query.data?.por_sucursal.length]);
 
   return (

@@ -25,10 +25,30 @@ class UsuarioAuth:
     def validar_password(self, password: str, password_hash: str) -> bool:
         return self._pwd_context.verify(password, password_hash)
 
-    def generar_token(self, id_usuario: int, email: str, rol: str) -> dict[str, str | int]:
+    def generar_token(
+        self,
+        id_usuario: int,
+        email: str,
+        rol: str,
+        *,
+        es_invitado: bool = False,
+        id_sucursal: int | None = None,
+    ) -> dict[str, str | int]:
         subject = str(id_usuario)
         return {
-            "access_token": token.crear_access_token(subject, email, rol),
-            "refresh_token": token.crear_refresh_token(subject, email, rol),
+            "access_token": token.crear_access_token(
+                subject,
+                email,
+                rol,
+                es_invitado=es_invitado,
+                id_sucursal=id_sucursal,
+            ),
+            "refresh_token": token.crear_refresh_token(
+                subject,
+                email,
+                rol,
+                es_invitado=es_invitado,
+                id_sucursal=id_sucursal,
+            ),
             "expires_in": token.access_expires_in_seconds(),
         }

@@ -1,18 +1,20 @@
-import { BagIcon, CloseIcon, TableIcon } from '@/components/icons';
+import { BagIcon, CameraIcon, CloseIcon, TableIcon, UsersIcon } from '@/components/icons';
 import { TabBar } from '@/components/TabBar';
 import type { AppTab, MesaSession } from '@/types';
 
 interface AppShellProps {
   activeTab: AppTab;
   cartCount: number;
-  mesa: MesaSession;
+  mesa: MesaSession | null;
   children: React.ReactNode;
   onTabChange: (tab: AppTab) => void;
   onOpenCart: () => void;
   onResetMesa: () => void;
+  onScanMesa: () => void;
+  onOpenProfile: () => void;
 }
 
-export function AppShell({ activeTab, cartCount, mesa, children, onTabChange, onOpenCart, onResetMesa }: AppShellProps): JSX.Element {
+export function AppShell({ activeTab, cartCount, mesa, children, onTabChange, onOpenCart, onResetMesa, onScanMesa, onOpenProfile }: AppShellProps): JSX.Element {
   return (
     <div className="mx-auto min-h-[100dvh] max-w-[440px] bg-cream-bg text-ink-900 shadow-[0_0_0_1px_rgba(31,26,20,0.06)]">
       <header className="sticky top-0 z-30 border-b border-[rgba(31,26,20,0.08)] bg-cream-surface/95 px-4 py-3 backdrop-blur">
@@ -22,15 +24,18 @@ export function AppShell({ activeTab, cartCount, mesa, children, onTabChange, on
             <div className="font-serif text-[20px] font-semibold leading-none">UTTOF</div>
             <div className="mt-1 flex items-center gap-1 text-xs font-medium text-ink-500">
               <TableIcon size={12} />
-              Mesa {mesa.numero} · {mesa.zona}
+              {mesa ? `Mesa ${mesa.numero} · ${mesa.zona}` : 'Aún no has iniciado una mesa'}
             </div>
           </div>
           <button type="button" className="relative grid h-11 w-11 place-items-center rounded-sm bg-coral-50 text-coral-600" onClick={onOpenCart} aria-label="Abrir carrito">
             <BagIcon size={19} />
             {cartCount > 0 ? <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-coral px-1 font-mono text-[10px] font-bold text-white">{cartCount}</span> : null}
           </button>
-          <button type="button" className="grid h-11 w-11 place-items-center rounded-sm border border-[rgba(31,26,20,0.08)] text-ink-400" onClick={onResetMesa} aria-label="Cambiar mesa">
-            <CloseIcon size={18} />
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-sm border border-[rgba(31,26,20,0.08)] text-ink-400" onClick={mesa ? onResetMesa : onScanMesa} aria-label={mesa ? 'Cerrar sesión de mesa' : 'Escanear mesa'}>
+            {mesa ? <CloseIcon size={18} /> : <CameraIcon size={18} />}
+          </button>
+          <button type="button" className="grid h-11 w-11 place-items-center rounded-sm border border-[rgba(31,26,20,0.08)] text-ink-400" onClick={onOpenProfile} aria-label="Abrir perfil">
+            <UsersIcon size={18} />
           </button>
         </div>
       </header>

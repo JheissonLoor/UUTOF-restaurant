@@ -26,6 +26,7 @@ const filters: Array<{ value: MesaFilter; label: string }> = [
   { value: 'all', label: 'Todas' },
   { value: 'libre', label: 'Libres' },
   { value: 'ocupada', label: 'Ocupadas' },
+  { value: 'lista', label: 'Listas' },
   { value: 'reservada', label: 'Reservadas' },
   { value: 'limpieza', label: 'Limpieza' },
 ];
@@ -59,7 +60,7 @@ export function MesasPage(): JSX.Element {
   const mesasQuery = useQuery({
     queryKey: ['mesas'],
     queryFn: getMesas,
-    refetchInterval: 30000,
+    refetchInterval: 10000,
   });
 
   const mesas = mesasQuery.data ?? [];
@@ -73,6 +74,7 @@ export function MesasPage(): JSX.Element {
       libre: 0,
       ocupada: 0,
       reservada: 0,
+      lista: 0,
       limpieza: 0,
     };
 
@@ -82,6 +84,8 @@ export function MesasPage(): JSX.Element {
 
     return nextCounts;
   }, [mesas]);
+
+  const mesasEnServicio = counts.ocupada + counts.lista;
 
   const updateMutation = useMutation({
     mutationFn: ({ idMesa, estado }: UpdateMesaVariables) => updateMesaEstado(idMesa, estado),
@@ -137,7 +141,7 @@ export function MesasPage(): JSX.Element {
           <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-ink-500">
             <span>{mesas.length} mesas</span>
             <span aria-hidden="true">·</span>
-            <span>{counts.ocupada} ocupadas</span>
+            <span>{mesasEnServicio} en servicio</span>
             <span aria-hidden="true">·</span>
             <span>{counts.libre} libres</span>
             {mesasQuery.isFetching ? (

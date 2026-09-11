@@ -413,7 +413,9 @@ async def obtener_pedido(session: AsyncSession, id_pedido: int) -> dict[str, Any
     pedido_result = await session.execute(
         text(
             """
-            SELECT p.id_pedido, p.id_mesa, p.estado, p.comensales, p.total,
+            SELECT p.id_pedido, p.id_mesa,
+                   DATE_FORMAT(p.creado_en, '%Y-%m-%dT%H:%i:%s') AS creado_en,
+                   p.estado, p.comensales, p.total,
                    pg.estado AS pago_estado
             FROM pedido p
             LEFT JOIN pago pg ON pg.id_pedido = p.id_pedido
@@ -464,6 +466,90 @@ async def obtener_pedido(session: AsyncSession, id_pedido: int) -> dict[str, Any
         for row in items_result.all()
     ]
     return pedido
+
+
+async def listar_pedidos_cliente(session: AsyncSession, id_cliente: int) -> list[dict[str, Any]]:
+    pedidos_result = await session.execute(
+        text(
+            """
+            SELECT
+              p.id_pedido,
+              p.id_mesa,
+              DATE_FORMAT(p.creado_en, '%Y-%m-%dT%H:%i:%s') AS creado_en,
+              p.estado,
+              p.comensales,
+              p.total,
+              (
+                SELECT pg.estado
+                FROM pago pg
+                WHERE pg.id_pedido = p.id_pedido
+                ORDER BY pg.fecha DESC, pg.id_transaccion DESC
+                LIMIT 1
+              ) AS pago_estado
+            FROM pedido p
+            WHERE p.id_usuario = :id_cliente
+            ORDER BY p.creado_en DESC, p.id_pedido DESC
+            LIMIT 50
+            """
+        ),
+        {"id_cliente": id_cliente},
+    )
+    pedido_rows = pedidos_result.all()
+    if not pedido_rows:
+        return []
+
+    pedidos: list[dict[str, Any]] = []
+    pedidos_por_id: dict[int, dict[str, Any]] = {}
+    for row in pedido_rows:
+        data = dict(row._mapping)
+        id_pedido = int(data["id_pedido"])
+        pedido = {
+            "id_pedido": id_pedido,
+            "id_mesa": int(data["id_mesa"]),
+            "creado_en": str(data["creado_en"]),
+            "estado": str(data["estado"]),
+            "comensales": int(data["comensales"]),
+            "total": float(data["total"]),
+            "pago_estado": data["pago_estado"],
+            "items": [],
+        }
+        pedidos.append(pedido)
+        pedidos_por_id[id_pedido] = pedido
+
+    items_result = await session.execute(
+        text(
+            """
+            SELECT
+              dp.id_pedido,
+              dp.id_detalle,
+              dp.id_platillo,
+              pl.nombre,
+              dp.cantidad AS qty,
+              ROUND(dp.subtotal / dp.cantidad, 2) AS price,
+              dp.notas AS nota,
+              dp.curso,
+              dp.estado_item
+            FROM detalle_pedido dp
+            INNER JOIN platillo pl ON pl.id_platillo = dp.id_platillo
+            WHERE dp.id_pedido IN :pedido_ids
+            ORDER BY dp.id_pedido DESC, dp.id_detalle
+            """
+        ).bindparams(bindparam("pedido_ids", expanding=True)),
+        {"pedido_ids": list(pedidos_por_id)},
+    )
+    for row in items_result.all():
+        data = dict(row._mapping)
+        pedidos_por_id[int(data.pop("id_pedido"))]["items"].append(
+            {
+                **data,
+                "id_detalle": int(data["id_detalle"]),
+                "id_platillo": int(data["id_platillo"]),
+                "qty": int(data["qty"]),
+                "price": float(data["price"]),
+            }
+        )
+
+    return pedidos
 
 
 async def pertenece_a_mesero(session: AsyncSession, id_pedido: int, id_mesero: int) -> bool:
@@ -588,7 +674,11 @@ async def obtener_pedido_base(session: AsyncSession, id_pedido: int) -> dict[str
     return dict(row._mapping) if row is not None else None
 
 
-async def obtener_pedido_abierto_por_mesa(session: AsyncSession, id_mesa: int) -> dict[str, Any] | None:
+async def obtener_pedido_abierto_por_mesa(
+    session: AsyncSession,
+    id_mesa: int,
+    id_cliente: int,
+) -> dict[str, Any] | None:
     result = await session.execute(
         text(
             """
@@ -596,12 +686,13 @@ async def obtener_pedido_abierto_por_mesa(session: AsyncSession, id_mesa: int) -
             FROM pedido p
             INNER JOIN mesa m ON m.id_mesa = p.id_mesa
             WHERE p.id_mesa = :id_mesa
+              AND p.id_usuario = :id_cliente
               AND p.estado IN ('creado', 'en_cocina', 'listo', 'entregado')
             ORDER BY p.creado_en DESC, p.id_pedido DESC
             LIMIT 1
             """
         ),
-        {"id_mesa": id_mesa},
+        {"id_mesa": id_mesa, "id_cliente": id_cliente},
     )
     row = result.first()
     return dict(row._mapping) if row is not None else None

@@ -1,9 +1,11 @@
 # UTTOF Cliente - Operación Pro
 
-Aplicación móvil web para el comensal de UTTOF. Permite ingresar a una mesa, consultar la carta, enviar un pedido directo a cocina, seguir su estado y completar el checkout postpago.
+Aplicación web pública y móvil para clientes de UTTOF. Incluye portada del restaurante, cuenta opcional, carta pública, reservas, entrada por QR, pedido directo a cocina, seguimiento y checkout postpago.
 
 ## Funciones
 
+- Portada pública, login, registro y preferencias peruanas persistentes.
+- Sesión invitada segura que puede convertirse en cuenta sin perder pedidos.
 - Autenticación JWT con renovación automática.
 - Entrada walk-in por mesa con escaneo QR mediante la cámara o ingreso manual.
 - Carta conectada al backend, carrito persistente y notas por platillo.
@@ -14,7 +16,7 @@ Aplicación móvil web para el comensal de UTTOF. Permite ingresar a una mesa, c
 
 El pago dividido, fidelización y pedidos programados pertenecen al plan Multi-local y no se muestran en esta aplicación Pro.
 
-El QR de cada mesa usa el formato `uttof://mesa/{id_mesa}` y puede descargarse desde el detalle de la mesa en el Panel Admin. La cámara requiere permiso del usuario y un contexto seguro: HTTPS en despliegue o `localhost`/`127.0.0.1` durante el desarrollo.
+El QR de cada mesa usa una URL HTTPS con token opaco y un código corto. Los QR históricos `uttof://mesa/{id_mesa}` siguen siendo compatibles. El QR de reserva es independiente y solo valida la llegada; el QR físico de mesa inicia la visita. La cámara requiere HTTPS en despliegue o `localhost`/`127.0.0.1` durante el desarrollo.
 
 ## Ejecutar
 

@@ -1,3 +1,4 @@
+import secrets
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -5,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entidad.reserva.infraestructura import repo
 from app.entidad.reserva.infraestructura.schemas import ReservaCreateRequest, ReservaPublica
+from app.entidad.reserva.aplicacion.presentacion import presentar_reserva
 
 
 async def crear_reserva(
@@ -12,6 +14,8 @@ async def crear_reserva(
     data: ReservaCreateRequest,
     actor: dict[str, Any],
 ) -> ReservaPublica:
+    if bool(actor.get("es_invitado")):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Crea una cuenta para reservar")
     mesa = await repo.obtener_mesa_para_reserva(session, data.id_mesa)
     if mesa is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mesa no encontrada")
@@ -37,5 +41,6 @@ async def crear_reserva(
         hora_reserva=data.hora_reserva,
         num_personas=data.num_personas,
         notas=data.notas,
+        qr_token=secrets.token_hex(32),
     )
-    return ReservaPublica(**reserva)
+    return presentar_reserva(reserva)

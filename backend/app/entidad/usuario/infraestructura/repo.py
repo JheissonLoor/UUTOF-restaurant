@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from sqlalchemy import text
@@ -32,7 +33,7 @@ async def listar_usuarios(
     result = await session.execute(
         text(
             f"""
-            SELECT id_usuario, nombre, email, telefono, rol, creado_en
+            SELECT id_usuario, nombre, email, telefono, rol, id_sucursal, creado_en
             FROM usuario
             {where_clause}
             ORDER BY id_usuario
@@ -52,12 +53,13 @@ async def crear_usuario(
     telefono: str | None,
     password_hash: str,
     rol: str,
+    id_sucursal: int | None,
 ) -> dict[str, Any]:
     await session.execute(
         text(
             """
-            INSERT INTO usuario (nombre, email, telefono, password_hash, rol)
-            VALUES (:nombre, :email, :telefono, :password_hash, :rol)
+            INSERT INTO usuario (nombre, email, telefono, password_hash, rol, id_sucursal)
+            VALUES (:nombre, :email, :telefono, :password_hash, :rol, :id_sucursal)
             """
         ),
         {
@@ -66,6 +68,7 @@ async def crear_usuario(
             "telefono": telefono,
             "password_hash": password_hash,
             "rol": rol,
+            "id_sucursal": id_sucursal,
         },
     )
     result = await session.execute(text("SELECT LAST_INSERT_ID() AS id_usuario"))
@@ -82,7 +85,7 @@ async def obtener_usuario(session: AsyncSession, id_usuario: int) -> dict[str, A
     result = await session.execute(
         text(
             """
-            SELECT id_usuario, nombre, email, telefono, rol, creado_en
+            SELECT id_usuario, nombre, email, telefono, rol, id_sucursal, creado_en
             FROM usuario
             WHERE id_usuario = :id_usuario
             LIMIT 1
@@ -102,6 +105,7 @@ async def actualizar_usuario(
         "nombre": "nombre",
         "telefono": "telefono",
         "rol": "rol",
+        "id_sucursal": "id_sucursal",
     }
     set_parts: list[str] = []
     params: dict[str, Any] = {"id_usuario": id_usuario}
@@ -126,3 +130,51 @@ async def actualizar_usuario(
     )
     await session.commit()
     return await obtener_usuario(session, id_usuario)
+
+
+async def obtener_preferencias(session: AsyncSession, id_usuario: int) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            SELECT dieta, cocinas, actualizado_en
+            FROM preferencia_cliente
+            WHERE id_usuario = :id_usuario
+            LIMIT 1
+            """
+        ),
+        {"id_usuario": id_usuario},
+    )
+    row = result.first()
+    if row is None:
+        return None
+    data = dict(row._mapping)
+    if isinstance(data["cocinas"], str):
+        data["cocinas"] = json.loads(data["cocinas"])
+    return data
+
+
+async def guardar_preferencias(
+    session: AsyncSession,
+    *,
+    id_usuario: int,
+    dieta: str,
+    cocinas: list[str],
+) -> dict[str, Any]:
+    await session.execute(
+        text(
+            """
+            INSERT INTO preferencia_cliente (id_usuario, dieta, cocinas)
+            VALUES (:id_usuario, :dieta, :cocinas)
+            ON DUPLICATE KEY UPDATE
+              dieta = VALUES(dieta),
+              cocinas = VALUES(cocinas),
+              actualizado_en = CURRENT_TIMESTAMP
+            """
+        ),
+        {"id_usuario": id_usuario, "dieta": dieta, "cocinas": json.dumps(cocinas)},
+    )
+    await session.commit()
+    preferencias = await obtener_preferencias(session, id_usuario)
+    if preferencias is None:
+        raise RuntimeError("No se pudieron recuperar las preferencias")
+    return preferencias

@@ -8,7 +8,7 @@ export type PedidoEstado =
   | 'pagado'
   | 'cancelado';
 
-export type MesaEstado = 'libre' | 'ocupada' | 'reservada' | 'limpieza';
+export type MesaEstado = 'libre' | 'ocupada' | 'reservada' | 'lista' | 'limpieza';
 
 export type ActivityType = 'order' | 'pay' | 'ready' | 'reserve' | 'review';
 
@@ -133,17 +133,31 @@ export interface CursorPage<T> {
 
 export interface PedidoActivoMesa {
   id_pedido: number;
-  total: number;
-  tiempo_min: number;
   comensales: number;
+  abierto_en: string;
+  minutos: number;
+  total: number;
+  curso_actual: string;
+  items_count: number;
+  en_cocina: number;
+  alerta: number;
+  progreso: string;
 }
 
 export interface Mesa {
   id_mesa: number;
   numero: number;
+  zona: 'salon' | 'terraza' | 'barra' | 'privado';
   capacidad: number;
   estado: MesaEstado;
-  pedido_activo?: PedidoActivoMesa;
+  pedido_activo: PedidoActivoMesa | null;
+}
+
+export interface MesaQr {
+  id_mesa: number;
+  numero: number;
+  qr_url: string;
+  codigo_corto: string;
 }
 
 export interface Reserva {
@@ -154,6 +168,10 @@ export interface Reserva {
   hora_reserva: string;
   num_personas: number;
   notas_especiales: string | null;
+  folio: string;
+  estado: 'confirmada' | 'validada' | 'cancelada' | 'completada';
+  qr_url: string;
+  creado_en: string;
 }
 
 export interface Usuario {

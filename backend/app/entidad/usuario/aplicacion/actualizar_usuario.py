@@ -19,12 +19,13 @@ async def actualizar_usuario(
         )
 
     cambios = data.model_dump(exclude_unset=True)
-    if "rol" in cambios:
-        if actor.get("rol") != "admin":
+    if "rol" in cambios or "id_sucursal" in cambios:
+        if actor.get("rol") not in {"admin", "dueno"}:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Solo admin puede cambiar roles",
+                detail="Solo admin o el dueno pueden cambiar roles y sucursales",
             )
+    if "rol" in cambios:
         try:
             validar_rol(cambios["rol"])
         except ValueError as exc:

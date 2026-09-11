@@ -5,6 +5,7 @@ import { getErrorDetail } from '@/api/errors';
 import { sentarComensales } from '@/api/mesas';
 import { useAuth } from '@/auth/useAuth';
 import { SentarComensales } from '@/components/SentarComensales';
+import { ReservaScanner } from '@/components/ReservaScanner';
 import { AddDishes } from '@/pages/AddDishes';
 import { LoginView } from '@/pages/LoginView';
 import { MesaDetail } from '@/pages/MesaDetail';
@@ -18,6 +19,7 @@ export function App(): JSX.Element {
   const [seatMesa, setSeatMesa] = useState<Mesa | null>(null);
   const [seatError, setSeatError] = useState<string | null>(null);
   const [mode, setMode] = useState<'mesas' | 'detalle' | 'agregar'>('mesas');
+  const [reservationScannerOpen, setReservationScannerOpen] = useState(false);
 
   const seatMutation = useMutation({
     mutationFn: ({ mesa, comensales }: { mesa: Mesa; comensales: number }) => sentarComensales(mesa.id_mesa, comensales),
@@ -87,6 +89,7 @@ export function App(): JSX.Element {
           setSeatError(null);
           setSeatMesa(mesa);
         }}
+        onValidateReservation={() => setReservationScannerOpen(true)}
       />
       <SentarComensales
         mesa={seatMesa}
@@ -98,6 +101,7 @@ export function App(): JSX.Element {
         }}
         onConfirm={(mesa, comensales) => seatMutation.mutate({ mesa, comensales })}
       />
+      <ReservaScanner open={reservationScannerOpen} onClose={() => setReservationScannerOpen(false)} />
     </>
   );
 }
