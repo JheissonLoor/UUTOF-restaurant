@@ -106,6 +106,8 @@ Los módulos principales separan `dominio`, `aplicacion` e `infraestructura`.
 - WebSocket para eventos operativos.
 - ZXing para lectura real de QR.
 
+El documento técnico navegable se encuentra en `docs/arquitectura.html`.
+
 ## Seguridad y acceso
 
 - Access token de 15 minutos y refresh token de 7 días.
@@ -127,7 +129,7 @@ Requisitos:
 ### Base de datos
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
+cd backend
 copy .env.example .env
 Get-Content .\database\init_db.sql | C:\xampp\mysql\bin\mysql.exe -u root -p
 Get-Content .\app\db\migrations.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
@@ -148,7 +150,7 @@ Si `mysql` está disponible en `PATH`, reemplaza `C:\xampp\mysql\bin\mysql.exe` 
 ### Backend
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
+cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
