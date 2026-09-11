@@ -22,7 +22,7 @@ const DATA = {
     { key: "cancelado",  label: "Cancelado",      count: 1,  color: "var(--ink-400)" },
   ],
 
-  // Revenue over last 14 days (MXN)
+  // Ingresos de los ultimos 14 dias (PEN)
   revenue14: {
     labels: ["10","11","12","13","14","15","16","17","18","19","20","21","22","hoy"],
     thisWeek: [12800, 11400, 13600, 15200, 18900, 21400, 17200, 14100, 12900, 15600, 16800, 19400, 22100, 18420],

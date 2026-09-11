@@ -63,7 +63,7 @@ const VentasDiarias = () => {
     <div className="card">
       <div className="card-head">
         <h3>Ventas diarias · últimos 30 días</h3>
-        <span className="meta">$ MXN por día</span>
+        <span className="meta">S/ PEN por día</span>
       </div>
       <AreaChart
         series={[{ name: "Ventas", data: r.ventasDia }]}

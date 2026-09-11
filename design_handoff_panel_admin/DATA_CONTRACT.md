@@ -268,7 +268,7 @@ Todas las respuestas de error siguen este formato:
 Ejemplo:
 ```json
 {
-  "type": "https://uttof.mx/errors/validation",
+  "type": "https://api.uttof.pe/problems/422",
   "title": "Datos inválidos",
   "status": 422,
   "detail": "El campo precio debe ser mayor o igual a 0",

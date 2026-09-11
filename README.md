@@ -1,223 +1,151 @@
-# UTTOF - Plataforma SOA para Gestion de Restaurante
+# UTTOF Restaurant
 
-UTTOF es un proyecto academico de Arquitectura de Software orientado a la gestion operativa de un restaurante peruano. El sistema usa una arquitectura SOA sobre un monolito modular, con backend en FastAPI, base de datos MySQL y frontends independientes para administracion, mesero, cocina y cliente.
+Plataforma peruana de gestión integral para restaurantes, construida como proyecto académico de Arquitectura de Software. UTTOF conecta atención al cliente, salón, cocina y administración sobre un backend común con seguridad por roles.
 
-## Stack
+La solución está localizada para Perú: moneda `PEN`, formato `S/`, zona horaria `America/Lima`, pagos con Yape y teléfonos `+51`.
 
-- Backend: Python 3.11, FastAPI, SQLAlchemy async, MySQL/MariaDB.
-- Frontend: React 18, TypeScript, Vite, Tailwind CSS.
-- Seguridad: JWT, bcrypt y RBAC por rol.
-- Realtime: WebSocket para eventos de pedidos y mesas.
-- Localizacion: Peru, moneda PEN, formato visual `S/`, zona horaria `America/Lima`.
+## Planes del producto
+
+| Plan | Precio de referencia | Experiencia |
+| --- | ---: | --- |
+| Estándar | `S/ 99 / mes` por local | Web todo-en-uno para Cliente, Cocina, Verificador y Admin |
+| Operación Pro | `S/ 249 / mes` por local | Aplicaciones dedicadas para Cliente, Mesero, Cocina y Admin |
+| Multi-local | Desde `S/ 599 / mes` por local | Gestión de cadenas, KDS en tiempo real, inventario, reportes e inteligencia operativa |
+
+Los clientes del restaurante nunca eligen un plan comercial. El plan pertenece al restaurante y determina las herramientas internas disponibles.
+
+## Experiencias del sistema
+
+| Aplicación | Ruta | Propósito |
+| --- | --- | --- |
+| Cliente público | `frontend/cliente` | Portada del restaurante, carta, reservas, QR de mesa, pedidos y pagos |
+| Panel Admin Pro | `frontend/admin` | Dashboard, menú, mesas, empleados, reservas, reportes y configuración |
+| App Mesero Pro | `frontend/mesero` | Mesas, pedidos, cobros, efectivo y validación de reservas |
+| Cocina Pro | `frontend/cocina` | Kanban operativo con polling |
+| KDS Multi-local | `frontend/kds` | Cocina avanzada en tiempo real, cronómetros, sonido e ítems individuales |
+| Plan Estándar | `frontend/standard` | Aplicación unificada para los cuatro roles |
+| Admin Multi-local | `frontend/admin-multilocal` | Consolidado de la red, sucursales, IA, inventario, reportes, personal e integraciones |
+
+## Flujos principales
+
+```mermaid
+flowchart LR
+  A["Portada UTTOF"] --> B["Crear cuenta"]
+  B --> C["Preferencias peruanas"]
+  C --> D["Inicio del cliente"]
+  D --> E["Reservar o ver carta"]
+```
+
+```mermaid
+flowchart LR
+  A["Continuar como invitado"] --> B["Carta pública"]
+  B --> C["Escanear QR de mesa"]
+  C --> D["Sesión invitada segura"]
+  D --> E["Pedido a cocina"]
+  E --> F["Seguimiento y pago"]
+  F --> G["Crear cuenta opcional"]
+```
+
+```mermaid
+flowchart LR
+  A["Cliente registrado"] --> B["Reserva confirmada"]
+  B --> C["QR de reserva"]
+  C --> D["Mesero valida llegada"]
+  D --> E["QR físico de mesa"]
+  E --> F["Check-in y pedido"]
+```
+
+## Dos QR, dos responsabilidades
+
+| QR | Ubicación | Función |
+| --- | --- | --- |
+| QR de reserva | App del cliente | Identifica una reserva confirmada; Mesero lo valida al recibir al cliente |
+| QR de mesa | Impreso en cada mesa | Inicia la visita, crea o recupera la sesión y habilita pedidos |
+
+El QR de mesa usa una URL HTTPS con token opaco y un código corto de respaldo. Los QR históricos `uttof://mesa/{id}` continúan funcionando durante la transición.
 
 ## Arquitectura
 
-El backend esta organizado como monolito modular con separacion SOA:
-
-- `utilidad`: autenticacion, RBAC, configuracion, realtime y soporte transversal.
-- `entidad`: usuario, menu, mesa, pedido, reserva y pago.
-- `tarea`: flujos de reporte y procesos de negocio.
-
-Cada modulo principal sigue estructura hexagonal:
-
-```text
-dominio/
-aplicacion/
-infraestructura/
+```mermaid
+flowchart TB
+  subgraph Frontends
+    CLI["Cliente"]
+    ADM["Admin"]
+    MES["Mesero"]
+    COC["Cocina"]
+    KDS["KDS Multi-local"]
+    RED["Admin Multi-local"]
+  end
+  API["FastAPI Gateway /v1"]
+  AUTH["JWT + RBAC"]
+  MOD["Módulos SOA y hexagonales"]
+  DB[("MySQL / MariaDB")]
+  WS["WebSocket"]
+  Frontends --> API
+  RED --> API
+  API --> AUTH
+  API --> MOD
+  MOD --> DB
+  API <--> WS
 ```
 
-## Estructura Del Proyecto
+El backend es un monolito modular con tres grupos:
 
-```text
-backend/
-  app/
-    gateway/
-    utilidad/
-    entidad/
-    tarea/
-    db/
-  database/
-  requirements.txt
+- `utilidad`: autenticación, RBAC, configuración y tiempo real.
+- `entidad`: usuario, menú, mesa, pedido, reserva, pago y reseña.
+- `tarea`: reportes y flujos coordinados.
 
-frontend/
-  standard/
-  admin/
-  cliente/
-  kds/
-  mesero/
-  cocina/
+Los módulos principales separan `dominio`, `aplicacion` e `infraestructura`.
 
-docs/
-  arquitectura.html
+## Stack
 
-design_handoff_cocina_basico/
-design_handoff_cocina_pro/
-design_handoff_cliente/
-design_handoff_kds/
-design_handoff_mesero/
-design_handoff_panel_admin/
-```
+- Python 3.11, FastAPI y SQLAlchemy async.
+- MySQL 8 o MariaDB mediante `asyncmy`.
+- React 18, TypeScript, Vite y Tailwind CSS.
+- JWT HS256, bcrypt cost 12 y RBAC.
+- WebSocket para eventos operativos.
+- ZXing para lectura real de QR.
 
-## Modelo De Planes
+## Seguridad y acceso
 
-UTTOF se organiza en tres niveles comerciales. Todos comparten el mismo backend, pero cada frontend expone solamente las funciones de su plan.
+- Access token de 15 minutos y refresh token de 7 días.
+- Roles técnicos: `admin`, `dueno`, `gerente_sucursal`, `mesero`, `cocina` y `cliente`.
+- El dueño puede consultar toda la red; cada gerente queda limitado por backend a su `id_sucursal` incluido en el JWT.
+- SQL parametrizado en los repositorios.
+- Errores HTTP en Problem Details (`application/problem+json`).
+- Las sesiones invitadas usan usuarios anónimos sin datos personales y pueden convertirse en cuentas registradas conservando pedidos.
+- Google, Apple y SMS aparecen como `Próximamente`; no simulan autenticación.
 
-| Plan | Precio de referencia | Experiencia | Implementacion actual |
-| --- | ---: | --- | --- |
-| Estandar | S/ 99 | Una sola aplicacion para Cliente, Verificador, Cocina y Admin | `frontend/standard` |
-| Operacion Pro | S/ 249 | Aplicaciones dedicadas para cada area operativa | `frontend/admin`, `frontend/mesero`, `frontend/cliente`, `frontend/cocina` |
-| Multi-local | S/ 599 | Operacion avanzada, tiempo real y administracion de varias sedes | `frontend/kds` como primer modulo premium |
+## Preparación local
 
-El tablero simple del plan Estandar vive dentro de `frontend/standard`; la cocina dedicada del plan Operacion Pro vive en `frontend/cocina`.
-
-## Roles
-
-El backend maneja cuatro roles tecnicos:
-
-| Rol | Responsabilidad |
-| --- | --- |
-| `admin` | Gestiona dashboard, menu, mesas, usuarios, reportes y configuracion. |
-| `mesero` | En Estandar actua como Verificador; en Pro gestiona mesas, pedidos y cobros. |
-| `cocina` | Atiende el tablero simple, la cocina dedicada Pro o el KDS Multi-local. |
-| `cliente` | Realiza check-in, consulta la carta, envia pedidos, sigue estados, paga, reserva y registra resenas. |
-
-## Funcionalidades Implementadas
-
-Backend:
-
-- Health check en `/health`.
-- Autenticacion JWT: register, login y refresh.
-- RBAC por rol.
-- Usuarios: listar, obtener y actualizar.
-- Menu: categorias, platillos, creacion y actualizacion.
-- Mesas: listado, estado, check-in y sentar comensales.
-- Pedidos: listado para cocina, cambio de estado por flujo, detalle, creacion desde cliente, agregar items, llamar cocina, marcar item entregado y generar cuenta.
-- Pagos compartidos: tarjeta, Yape, efectivo y mixto. En Estandar se muestran tarjeta, Yape y efectivo; el pago dividido queda reservado para Multi-local.
-- Verificacion de efectivo: bandeja por mesas asignadas, monto recibido, cambio, confirmacion atomica y liberacion de mesa.
-- Reservas y resenas para la experiencia del cliente.
-- Reportes: dashboard y ventas.
-- Configuracion base del restaurante.
-- WebSocket base para eventos realtime con admin, mesero, cocina y cliente.
-
-Frontend Estandar (`frontend/standard`):
-
-- Una URL para los cuatro perfiles, con redireccion por rol despues del login.
-- Cliente: carta, carrito, check-in, pedido, seguimiento por polling, pago, reserva y resena.
-- Verificador: cobros en efectivo pendientes, confirmacion del monto recibido y calculo de cambio.
-- Cocina: kanban claro de tres estados, avance del pedido completo y polling cada 30 segundos.
-- Admin: dashboard, menu, mesas, usuarios, reportes por rango y configuracion.
-- No expone pagos divididos, exportaciones, cronometros de urgencia ni KDS en tiempo real.
-
-Operacion Pro - Frontend Admin:
-
-- Login protegido por rol admin.
-- Dashboard conectado al backend.
-- Navegacion principal.
-- Modulos de menu, mesas, reservas, empleados, reportes y configuracion.
-- Estados de carga, error y vacio en pantallas principales.
-
-Operacion Pro - Frontend Mesero:
-
-- Login del mesero.
-- Lista de mesas asignadas.
-- Filtros por todas, ocupadas, atencion y libres.
-- Detalle de mesa y pedido.
-- Marcar item listo como entregado.
-- Llamar cocina.
-- Sentar comensales en mesa libre.
-- Agregar platillos al pedido.
-- Enviar platos a cocina.
-- Cobrar cuenta con tarjeta, efectivo o Yape.
-- Verificar pagos en efectivo solicitados desde la App Cliente.
-- Generar una cuenta QR vinculada al folio del pedido.
-- Liberar mesa despues del pago.
-
-Operacion Pro - Frontend Cocina Dedicada (`frontend/cocina`):
-
-- Login para rol cocina o admin.
-- Tablero kanban claro con columnas: en espera, en preparacion, terminado, por pagar y pagado.
-- Polling cada 15 segundos contra el backend real.
-- Avance manual del pedido completo: empezar preparacion, marcar terminado y entregar a mesa.
-- Indicador del origen del pedido, progreso por platillos y urgencia visual despues de 20 minutos.
-- Estadisticas del turno y filtro por mesa.
-- Filtros por estado con contador.
-- Estados de carga, error, vacio y toast de confirmacion.
-
-Multi-local - KDS Premium:
-
-- Tema oscuro de alto contraste para monitor de cocina o tablet horizontal.
-- Login para rol cocina o admin.
-- Topbar con marca, reloj, cocinero activo y metricas.
-- Board conectado al backend real con tickets activos.
-- Vista en tarjetas y vista en lista.
-- Filtros por activos, nuevos, en cocina, urgentes y listos.
-- Cronometro visual por ticket con limite legible `99:59+` para pedidos antiguos.
-- Urgencia visual automatica por tiempo de preparacion.
-- Marcado individual de platillos dentro de cada ticket.
-- Avance de ticket completo a listo y entregado.
-- Pausa y reanudacion de tickets.
-- Reporte de falta de insumo desde el ticket.
-- Sonido opcional de aviso ante eventos nuevos.
-- Modo pantalla completa.
-- WebSocket con reconexion automatica, resaltado de tickets y refetch ante eventos de pedido.
-- Estados de carga, error, vacio y confirmaciones visuales.
-
-Operacion Pro - Frontend Cliente:
-
-- Entrada walk-in con escaneo QR mediante la camara y confirmacion real de mesa.
-- Sesion automatica de cliente demo con JWT y refresh.
-- Carta publica conectada al backend real.
-- Carrito persistente en navegador por mesa.
-- Pedido directo a cocina usando `POST /v1/pedidos`.
-- Tracking del pedido con WebSocket y fallback por polling.
-- Checkout postpago con tarjeta, Yape o efectivo.
-- Reserva simple y registro de resena.
-- Estados de carga, error, vacio y confirmaciones visuales.
-
-## Pendiente
-
-- Completar Multi-local: inventario, varias sedes, exportaciones, pagos divididos, fidelizacion y modo offline.
-- Cambio de mesa.
-- Pruebas automatizadas mas amplias.
-- Despliegue en infraestructura publica.
-
-## Configuracion Inicial
-
-Requisitos locales:
+Requisitos:
 
 - Python 3.11.
-- Node.js.
+- Node.js y npm.
 - MySQL/MariaDB o XAMPP.
 
-Crear `.env` del backend:
+### Base de datos
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
 copy .env.example .env
-```
-
-Crear base de datos:
-
-```powershell
-Get-Content .\database\init_db.sql | mysql -u root -p
-Get-Content .\app\db\migrations.sql | mysql -u uttof_user -p uttof_db
-Get-Content .\app\db\003_mesero_app.sql | mysql -u uttof_user -p uttof_db
-Get-Content .\app\db\004_kds_premium.sql | mysql -u uttof_user -p uttof_db
-Get-Content .\app\db\005_pago_efectivo_pendiente.sql | mysql -u uttof_user -p uttof_db
-python -m app.db.seed
-```
-
-Si usas XAMPP y `mysql` no esta en PATH:
-
-```powershell
 Get-Content .\database\init_db.sql | C:\xampp\mysql\bin\mysql.exe -u root -p
 Get-Content .\app\db\migrations.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 Get-Content .\app\db\003_mesero_app.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 Get-Content .\app\db\004_kds_premium.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
 Get-Content .\app\db\005_pago_efectivo_pendiente.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\006_cliente_onboarding_qr.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\007_multilocal_base.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\008_inventario_multilocal.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\009_ia_multilocal.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\010_operacion_multilocal.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+Get-Content .\app\db\011_config_empresa.sql | C:\xampp\mysql\bin\mysql.exe -u uttof_user -p uttof_db
+python -m app.db.seed
 ```
 
-## Levantar Backend
+Si `mysql` está disponible en `PATH`, reemplaza `C:\xampp\mysql\bin\mysql.exe` por `mysql`.
+
+### Backend
 
 ```powershell
 cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\backend"
@@ -227,140 +155,89 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-URLs:
-
-- API: `http://127.0.0.1:8000`
-- Swagger: `http://127.0.0.1:8000/docs`
 - Health: `http://127.0.0.1:8000/health`
+- Swagger: `http://127.0.0.1:8000/docs`
 
-## Levantar Plan Estandar
+### Frontends
 
-```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\standard"
-npm.cmd install
-npm.cmd run dev
-```
-
-URL:
-
-```text
-http://127.0.0.1:5178
-```
-
-## Levantar Operacion Pro - Admin
+Cada aplicación se levanta en una terminal diferente:
 
 ```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\admin"
-npm.cmd install
-npm.cmd run dev
+cd frontend\admin; npm.cmd install; npm.cmd run dev
+cd frontend\mesero; npm.cmd install; npm.cmd run dev
+cd frontend\cocina; npm.cmd install; npm.cmd run dev
+cd frontend\cliente; npm.cmd install; npm.cmd run dev
+cd frontend\kds; npm.cmd install; npm.cmd run dev
+cd frontend\standard; npm.cmd install; npm.cmd run dev
+cd frontend\admin-multilocal; npm.cmd install; npm.cmd run dev
 ```
 
-URL:
+| Servicio | URL local |
+| --- | --- |
+| Admin | `http://127.0.0.1:5173` |
+| Mesero | `http://127.0.0.1:5174` |
+| Cocina Pro | `http://127.0.0.1:5175` |
+| Cliente público | `http://127.0.0.1:5176` |
+| KDS Multi-local | `http://127.0.0.1:5177` |
+| Plan Estándar | `http://127.0.0.1:5178` |
+| Admin Multi-local | `http://127.0.0.1:5179` |
 
-```text
-http://127.0.0.1:5173
-```
+## Cuentas de demostración
 
-## Levantar Operacion Pro - Mesero
+| Rol | Correo | Contraseña |
+| --- | --- | --- |
+| Admin | `admin@uttof.pe` | `admin123` |
+| Mesero | `mesero@uttof.pe` | `mesero123` |
+| Cocina | `cocina@uttof.pe` | `cocina123` |
+| Cliente | `cliente@uttof.pe` | `cliente123` |
+| Dueño de la red | `dueno@uttof.pe` | `dueno123` |
+| Gerente Miraflores | `gerente.miraflores@uttof.pe` | `gerente123` |
+| Gerente Barranco | `gerente.barranco@uttof.pe` | `gerente123` |
+| Gerente San Isidro | `gerente.sanisidro@uttof.pe` | `gerente123` |
 
-```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\mesero"
-npm.cmd install
-npm.cmd run dev
-```
+La App Cliente ya no inicia automáticamente con la cuenta demo.
 
-URL:
+## Configuración de despliegue
 
-```text
-http://127.0.0.1:5174
-```
+- Backend: `PUBLIC_CLIENT_URL=https://app.uttof.pe`.
+- Cliente: `VITE_API_URL=https://api.uttof.pe/v1`.
+- Todos los frontends deben agregarse a `CORS_ORIGINS`.
+- La cámara requiere HTTPS fuera de `localhost` y `127.0.0.1`.
+- Dirección, horarios, teléfono y medios de pago se administran desde Configuración del Panel Admin.
 
-## Levantar Operacion Pro - Cocina Dedicada
-
-```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cocina"
-npm.cmd install
-npm.cmd run dev
-```
-
-URL:
-
-```text
-http://127.0.0.1:5175
-```
-
-## Levantar Operacion Pro - Cliente
-
-```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\cliente"
-npm.cmd install
-npm.cmd run dev
-```
-
-URL:
-
-```text
-http://127.0.0.1:5176
-```
-
-## Levantar Multi-local - KDS Premium
-
-```powershell
-cd "C:\Users\jheis\OneDrive\Desktop\UTTOF - Restaurant\frontend\kds"
-npm.cmd install
-npm.cmd run dev
-```
-
-URL:
-
-```text
-http://127.0.0.1:5177
-```
-
-## Credenciales Demo
-
-```text
-Admin:
-admin@uttof.pe
-admin123
-
-Mesero:
-mesero@uttof.pe
-mesero123
-
-Cocina:
-cocina@uttof.pe
-cocina123
-
-Cliente:
-cliente@uttof.pe
-cliente123
-```
-
-## Validaciones Ejecutadas
+## Verificación
 
 ```powershell
 cd backend
+.\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe -m compileall -q app
 
-cd frontend/admin
-npm.cmd run build
-
-cd frontend/mesero
-npm.cmd run build
-
-cd frontend/cocina
-npm.cmd run build
-
-cd frontend/cliente
+cd frontend\cliente
 npm.cmd run lint
 npm.cmd run build
 
-cd frontend/kds
+cd ..\admin
+npm.cmd run build
+
+cd ..\mesero
+npm.cmd run build
+
+cd ..\standard
 npm.cmd run lint
 npm.cmd run build
 
-cd frontend/standard
+cd ..\admin-multilocal
 npm.cmd run lint
 npm.cmd run build
+
+cd ..\..\backend
+.\.venv\Scripts\python.exe tools\verify_e2e.py
 ```
+
+## Estado actual
+
+Implementado: backend modular, autenticación y RBAC, carta, mesas, pedidos, pagos, reservas, reportes, configuración, aplicaciones Estándar y Operación Pro, KDS, Admin Multi-local, portada pública, onboarding peruano, preferencias persistentes, invitado convertible y ambos flujos QR.
+
+El verificador integral crea datos temporales, recorre `QR de mesa → invitado → pedido → cocina → entrega → pago → cuenta → preferencias → reserva → validación del mesero` y limpia esos datos al terminar.
+
+Pendiente para una salida pública definitiva: aislamiento por restaurante o tenant, contratación y control de capacidades por plan, dominio, certificados HTTPS, proveedor real de tarjeta/Yape, correo/SMS transaccional, observabilidad, copias de seguridad gestionadas y pruebas de seguridad y carga. Las integraciones configurables y la predicción operativa actuales son demostrables, pero no sustituyen todavía conexiones certificadas con proveedores ni una plataforma externa de machine learning.
