@@ -1,18 +1,23 @@
 # UTTOF Restaurant
 
-Plataforma peruana de gestión integral para restaurantes, construida como proyecto académico de Arquitectura de Software. UTTOF conecta atención al cliente, salón, cocina y administración sobre un backend común con seguridad por roles.
+[![CI](https://github.com/JheissonLoor/UUTOF-restaurant/actions/workflows/ci.yml/badge.svg)](https://github.com/JheissonLoor/UUTOF-restaurant/actions/workflows/ci.yml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18-20232A?logo=react&logoColor=61DAFB)](https://react.dev)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-Asyncmy-D71F00)](https://www.sqlalchemy.org/)
+[![Testing](https://img.shields.io/badge/Pytest-20%20passed-brightgreen?logo=pytest)](backend/tests/)
 
-La solución está localizada para Perú: moneda `PEN`, formato `S/`, zona horaria `America/Lima`, pagos con Yape y teléfonos `+51`.
+Plataforma peruana de gestión integral para restaurantes, construida como proyecto académico de Arquitectura de Software. UTTOF conecta atención al cliente, salón, cocina en tiempo real (KDS) y administración sobre un backend asíncrono común con seguridad por roles (RBAC).
 
-## Planes del producto
+La solución está localizada para Perú: moneda `PEN`, formato `S/`, zona horaria `America/Lima`, flujo de pagos QR con Yape y validación telefónica `+51`.
 
-| Plan | Precio de referencia | Experiencia |
-| --- | ---: | --- |
-| Estándar | `S/ 99 / mes` por local | Web todo-en-uno para Cliente, Cocina, Verificador y Admin |
-| Operación Pro | `S/ 249 / mes` por local | Aplicaciones dedicadas para Cliente, Mesero, Cocina y Admin |
-| Multi-local | Desde `S/ 599 / mes` por local | Gestión de cadenas, KDS en tiempo real, inventario, reportes e inteligencia operativa |
+## Arquitectura del Sistema
 
-Los clientes del restaurante nunca eligen un plan comercial. El plan pertenece al restaurante y determina las herramientas internas disponibles.
+- **Backend Relacional Asíncrono:** Desarrollado en **FastAPI** con motor asíncrono **SQLAlchemy** y pool de conexiones **asyncmy** sobre MariaDB / MySQL.
+- **Pantalla de Cocina en Tiempo Real (KDS):** Monitor de preparación de comandas con actualización de estados en tiempo real, cronómetros y control por ítems.
+- **Diseño Orientado al Dominio:** Separación en capas modulares (entidad, aplicación, infraestructura y presentación) para reservas, comandas, mesas y pagos.
+- **Testing Automatizado:** Suite de 20 pruebas unitarias y de validación de esquemas ejecutadas con **Pytest** en pipeline automatizado de CI.
+
+> **Alcance del CI:** El pipeline automatizado actual valida la suite de 20 pruebas de backend (FastAPI/Pytest). La integración de validaciones de compilación y pruebas para las interfaces frontend está planificada como mejora posterior en el roadmap.
 
 ## Experiencias del sistema
 
