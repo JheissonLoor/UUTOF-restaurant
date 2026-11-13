@@ -17,6 +17,8 @@ La solución está localizada para Perú: moneda `PEN`, formato `S/`, zona horar
 - **Diseño Orientado al Dominio:** Separación en capas modulares (entidad, aplicación, infraestructura y presentación) para reservas, comandas, mesas y pagos.
 - **Testing Automatizado:** Suite de 20 pruebas unitarias y de validación de esquemas ejecutadas con **Pytest** en pipeline automatizado de CI.
 
+> **Alcance del CI:** El pipeline automatizado actual valida la suite de 20 pruebas de backend (FastAPI/Pytest). La integración de validaciones de compilación y pruebas para las interfaces frontend está planificada como mejora posterior en el roadmap.
+
 ## Experiencias del sistema
 
 | Aplicación | Ruta | Propósito |
